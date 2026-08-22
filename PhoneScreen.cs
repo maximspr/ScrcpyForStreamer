@@ -21,6 +21,40 @@ using System.Windows.Forms;
 namespace PhoneScreen
 {
     // ========================================================
+    // ЯЗЫК / LANGUAGE
+    //   ru — русский, en — English.
+    //   По умолчанию: русская Windows -> ru, иначе -> en.
+    //   Пользователь может переключить вручную в настройках.
+    // ========================================================
+    static class Lang
+    {
+        public static bool Ru = SystemIsRussian();
+
+        public static string T(string ruText, string enText)
+        {
+            return Ru ? ruText : enText;
+        }
+
+        public static bool SystemIsRussian()
+        {
+            try
+            {
+                return System.Globalization.CultureInfo.CurrentUICulture
+                    .TwoLetterISOLanguageName == "ru";
+            }
+            catch { return false; }
+        }
+
+        // применить язык из настроек: "ru"/"en"/"" (по системе)
+        public static void Apply(string code)
+        {
+            if (code == "ru") Ru = true;
+            else if (code == "en") Ru = false;
+            else Ru = SystemIsRussian();
+        }
+    }
+
+    // ========================================================
     // PATHS
     // ========================================================
     static class Paths
@@ -38,8 +72,20 @@ namespace PhoneScreen
         public static string SelfCopy { get { return Path.Combine(Root, "PhoneScreen.exe"); } }
 
         public const string Version = "4.1";
-        public const string AppName = "Экран телефона";
-        public const string SettingsName = "Экран телефона — настройки";
+
+        public static string AppName
+        {
+            get { return Lang.T("Экран телефона", "Phone Screen"); }
+        }
+        public static string SettingsName
+        {
+            get { return Lang.T("Экран телефона — настройки", "Phone Screen — Settings"); }
+        }
+
+        // Ссылки на используемые проекты / links to the projects we use
+        public const string UrlScrcpy = "https://github.com/Genymobile/scrcpy";
+        public const string UrlGnirehtet = "https://github.com/Genymobile/gnirehtet";
+        public const string UrlProject = "https://github.com/maximspr/ScrcpyForStreamer";
     }
 
     // ========================================================
@@ -158,37 +204,66 @@ namespace PhoneScreen
             switch (key)
             {
                 case "xiaomi":
-                    return "      Настройки → О телефоне\n" +
-                           "      7 раз нажать на «Версия HyperOS» (или «Версия MIUI»)\n\n" +
-                           "Дальше: Настройки → Расширенные настройки → Для разработчиков";
+                    return Lang.T(
+                        "      Настройки → О телефоне\n" +
+                        "      7 раз нажать на «Версия HyperOS» (или «Версия MIUI»)\n\n" +
+                        "Дальше: Настройки → Расширенные настройки → Для разработчиков",
+                        "      Settings → About phone\n" +
+                        "      Tap «HyperOS version» (or «MIUI version») 7 times\n\n" +
+                        "Then: Settings → Additional settings → Developer options");
                 case "samsung":
-                    return "      Настройки → Сведения о телефоне → Сведения о ПО\n" +
-                           "      7 раз нажать на «Номер сборки»\n\n" +
-                           "Дальше: Настройки → Параметры разработчика";
+                    return Lang.T(
+                        "      Настройки → Сведения о телефоне → Сведения о ПО\n" +
+                        "      7 раз нажать на «Номер сборки»\n\n" +
+                        "Дальше: Настройки → Параметры разработчика",
+                        "      Settings → About phone → Software information\n" +
+                        "      Tap «Build number» 7 times\n\n" +
+                        "Then: Settings → Developer options");
                 case "vivo":
-                    return "      Настройки → Ещё настройки → О телефоне\n" +
-                           "      7 раз нажать на «Версия ПО»\n\n" +
-                           "Дальше: Настройки → Ещё настройки → Для разработчиков";
+                    return Lang.T(
+                        "      Настройки → Ещё настройки → О телефоне\n" +
+                        "      7 раз нажать на «Версия ПО»\n\n" +
+                        "Дальше: Настройки → Ещё настройки → Для разработчиков",
+                        "      Settings → More settings → About phone\n" +
+                        "      Tap «Software version» 7 times\n\n" +
+                        "Then: Settings → More settings → Developer options");
                 case "oppo":
                 case "realme":
                 case "oneplus":
-                    return "      Настройки → О телефоне → Версия\n" +
-                           "      7 раз нажать на «Номер сборки»\n\n" +
-                           "Дальше: Настройки → Дополнительные настройки → Для разработчиков";
+                    return Lang.T(
+                        "      Настройки → О телефоне → Версия\n" +
+                        "      7 раз нажать на «Номер сборки»\n\n" +
+                        "Дальше: Настройки → Дополнительные настройки → Для разработчиков",
+                        "      Settings → About device → Version\n" +
+                        "      Tap «Build number» 7 times\n\n" +
+                        "Then: Settings → Additional settings → Developer options");
                 case "huawei":
                 case "honor":
-                    return "      Настройки → О телефоне\n" +
-                           "      7 раз нажать на «Номер сборки»\n\n" +
-                           "Дальше: Настройки → Система → Для разработчиков";
+                    return Lang.T(
+                        "      Настройки → О телефоне\n" +
+                        "      7 раз нажать на «Номер сборки»\n\n" +
+                        "Дальше: Настройки → Система → Для разработчиков",
+                        "      Settings → About phone\n" +
+                        "      Tap «Build number» 7 times\n\n" +
+                        "Then: Settings → System → Developer options");
                 case "meizu":
-                    return "      Настройки → Об устройстве\n" +
-                           "      7 раз нажать на «Номер сборки»\n\n" +
-                           "Дальше: Настройки → Спец. возможности → Для разработчиков";
+                    return Lang.T(
+                        "      Настройки → Об устройстве\n" +
+                        "      7 раз нажать на «Номер сборки»\n\n" +
+                        "Дальше: Настройки → Спец. возможности → Для разработчиков",
+                        "      Settings → About device\n" +
+                        "      Tap «Build number» 7 times\n\n" +
+                        "Then: Settings → Accessibility → Developer options");
                 default:
-                    return "      Настройки → О телефоне\n" +
-                           "      7 раз нажать на «Номер сборки»\n\n" +
-                           "Дальше: Настройки → Система → Для разработчиков\n" +
-                           "(на части телефонов — сразу Настройки → Для разработчиков)";
+                    return Lang.T(
+                        "      Настройки → О телефоне\n" +
+                        "      7 раз нажать на «Номер сборки»\n\n" +
+                        "Дальше: Настройки → Система → Для разработчиков\n" +
+                        "(на части телефонов — сразу Настройки → Для разработчиков)",
+                        "      Settings → About phone\n" +
+                        "      Tap «Build number» 7 times\n\n" +
+                        "Then: Settings → System → Developer options\n" +
+                        "(on some phones just Settings → Developer options)");
             }
         }
 
@@ -197,17 +272,27 @@ namespace PhoneScreen
             switch (key)
             {
                 case "xiaomi":
-                    return "На Xiaomi / Redmi / POCO для управления с компьютера нужен ещё один пункт: " +
-                           "«Отладка по USB (Настройки безопасности)», и после него — перезагрузка телефона.\n\n" +
-                           "Без управления всё работает и так.";
+                    return Lang.T(
+                        "На Xiaomi / Redmi / POCO для управления с компьютера нужен ещё один пункт: " +
+                        "«Отладка по USB (Настройки безопасности)», и после него — перезагрузка телефона.\n\n" +
+                        "Без управления всё работает и так.",
+                        "On Xiaomi / Redmi / POCO, controlling from the PC needs one more option: " +
+                        "«USB debugging (Security settings)», followed by a phone reboot.\n\n" +
+                        "Without control everything still works.");
                 case "oppo":
                 case "realme":
                 case "oneplus":
-                    return "На ColorOS / realme UI для управления с компьютера нужно включить " +
-                           "«Отключить контроль разрешений» — в самом низу меню «Для разработчиков».";
+                    return Lang.T(
+                        "На ColorOS / realme UI для управления с компьютера нужно включить " +
+                        "«Отключить контроль разрешений» — в самом низу меню «Для разработчиков».",
+                        "On ColorOS / realme UI, controlling from the PC needs " +
+                        "«Disable permission monitoring» at the bottom of Developer options.");
                 case "vivo":
-                    return "На vivo / iQOO для управления с компьютера может понадобиться пункт " +
-                           "«Отладка по USB (изменение настроек)» в меню разработчика.";
+                    return Lang.T(
+                        "На vivo / iQOO для управления с компьютера может понадобиться пункт " +
+                        "«Отладка по USB (изменение настроек)» в меню разработчика.",
+                        "On vivo / iQOO, controlling from the PC may need " +
+                        "«USB debugging (modify settings)» in Developer options.");
                 default:
                     return "";
             }
@@ -240,6 +325,7 @@ namespace PhoneScreen
         public bool ShareInternet = false;
 
         public bool CloseOnUnplug = true;
+        public string Language = "";   // "" = по системе, "ru", "en"
         public const int UnplugDelaySec = 6;
 
         // по сети физически не пролезает то же, что по проводу
@@ -345,6 +431,7 @@ namespace PhoneScreen
                         case "NETWORK_ADDR": c.S.NetworkAddr = v; break;
                         case "SHARE_INTERNET": c.S.ShareInternet = (v == "1"); break;
                         case "CLOSE_ON_UNPLUG": c.S.CloseOnUnplug = (v == "1"); break;
+                        case "LANGUAGE": c.S.Language = v; break;
                     }
                 }
             }
@@ -443,6 +530,7 @@ namespace PhoneScreen
                 sb.AppendLine("NETWORK_ADDR=" + S.NetworkAddr);
                 sb.AppendLine("SHARE_INTERNET=" + B(S.ShareInternet));
                 sb.AppendLine("CLOSE_ON_UNPLUG=" + B(S.CloseOnUnplug));
+                sb.AppendLine("LANGUAGE=" + S.Language);
 
                 // пишем через временный файл: обрыв питания посреди записи
                 // не оставит обрубленный конфиг и не потеряет телефон
@@ -531,7 +619,7 @@ namespace PhoneScreen
             using (Stream zip = asm.GetManifestResourceStream("scrcpy.zip"))
             {
                 if (zip == null)
-                    throw new Exception("Внутри программы не найден архив scrcpy — сборка повреждена.");
+                    throw new Exception(Lang.T("Внутри программы не найден архив scrcpy — сборка повреждена.", "The scrcpy archive is missing inside the program — the build is corrupted."));
 
                 using (ZipArchive archive = new ZipArchive(zip, ZipArchiveMode.Read))
                 {
@@ -564,7 +652,7 @@ namespace PhoneScreen
         public bool PortableDevice;
         public bool AndroidInterface;
         public bool Apple;
-        public string AppleKind = "устройство Apple";
+        public string AppleKind = Lang.T("устройство Apple", "Apple device");
         public string FirstName = "";
 
         const string AppleVid = "VID_05AC";
@@ -641,7 +729,7 @@ namespace PhoneScreen
             if (n.IndexOf("ipad", StringComparison.Ordinal) >= 0) return "iPad";
             if (n.IndexOf("ipod", StringComparison.Ordinal) >= 0) return "iPod";
             if (n.IndexOf("iphone", StringComparison.Ordinal) >= 0) return "iPhone";
-            return "устройство Apple";
+            return Lang.T("устройство Apple", "Apple device");
         }
 
         static List<string[]> Query2(string wql)
@@ -846,7 +934,7 @@ namespace PhoneScreen
                 if (extractionFailed)
                 {
                     s.Stage = Stage.Failed;
-                    s.Detail = "Не удалось распаковать программу в папку:\n" + Paths.ScrcpyDir;
+                    s.Detail = Lang.T("Не удалось распаковать программу в папку:\n", "Could not unpack the program into:\n") + Paths.ScrcpyDir;
                     return s;
                 }
 
@@ -1005,7 +1093,7 @@ namespace PhoneScreen
                 string vendor = Prop(s.Serial, "ro.product.manufacturer");
                 string model = Prop(s.Serial, "ro.product.model");
                 string name = (vendor + " " + model).Trim();
-                if (name.Length == 0) name = "Android-устройство";
+                if (name.Length == 0) name = Lang.T("Android-устройство", "Android device");
                 props = new string[] { name, Prop(s.Serial, "ro.build.version.release"),
                                        Brands.Detect(vendor + " " + model) };
                 lock (gate) propCache[s.Serial] = props;
@@ -1088,9 +1176,9 @@ namespace PhoneScreen
 
         static string DescribeSoftwareOnly(List<EncoderInfo> found)
         {
-            if (found.Count == 0) return "Телефон не сообщил ни одного видеокодировщика.";
+            if (found.Count == 0) return Lang.T("Телефон не сообщил ни одного видеокодировщика.", "The phone reported no video encoders at all.");
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Телефон предлагает только программные кодировщики:");
+            sb.AppendLine(Lang.T("Телефон предлагает только программные кодировщики:", "The phone offers only software encoders:"));
             int n = 0;
             foreach (EncoderInfo e in found)
             {
@@ -1128,13 +1216,11 @@ namespace PhoneScreen
 
             string devices = Exec.Run(Paths.AdbExe, "devices", 15000);
             if (devices.IndexOf(Cfg.UsbSerial, StringComparison.OrdinalIgnoreCase) < 0)
-                return "Телефон сейчас не подключён проводом. Сначала подключи его кабелем.";
+                return Lang.T("Телефон сейчас не подключён проводом. Сначала подключи его кабелем.", "The phone is not connected by cable right now. Connect it with a cable first.");
 
             string ip = FindDeviceIp(Cfg.UsbSerial);
             if (ip.Length == 0)
-                return "Не удалось узнать адрес телефона в сети.\n\n" +
-                       "Проверь, что телефон подключён к той же сети, что и компьютер — " +
-                       "по Wi-Fi или через переходник с Ethernet.";
+                return Lang.T("Не удалось узнать адрес телефона в сети.\n\nПроверь, что телефон подключён к той же сети, что и компьютер — по Wi-Fi или через переходник с Ethernet.", "Could not find the phone's network address.\n\nMake sure the phone is on the same network as the PC — over Wi-Fi or through an Ethernet adapter.");
 
             string tcpip = Exec.Run(Paths.AdbExe, "-s " + Cfg.UsbSerial + " tcpip 5555", 20000);
             Log.Write("tcpip: " + tcpip);
@@ -1157,8 +1243,7 @@ namespace PhoneScreen
                 Thread.Sleep(1500);
             }
 
-            return "Телефон не отозвался по адресу " + addr + ".\n\n" +
-                   "Обычно это значит, что телефон и компьютер в разных сетях.";
+            return Lang.T("Телефон не отозвался по адресу ", "The phone did not respond at ") + addr + Lang.T(".\n\nОбычно это значит, что телефон и компьютер в разных сетях.", ".\n\nUsually this means the phone and the PC are on different networks.");
         }
 
         public void SwitchToCable()
@@ -1337,24 +1422,22 @@ namespace PhoneScreen
             string t = text ?? "";
 
             if (t.IndexOf("INJECT_EVENTS", StringComparison.OrdinalIgnoreCase) >= 0)
-                return "Телефон не разрешил управление с компьютера.\n\n" +
-                       "В настройках выключи «Управлять телефоном с компьютера» — так всё заработает.";
+                return Lang.T("Телефон не разрешил управление с компьютера.\n\nВ настройках выключи «Управлять телефоном с компьютера» — так всё заработает.", "The phone refused control from the PC.\n\nIn settings, turn off «Control the phone from the PC» — then it will work.");
 
             if (t.IndexOf("Could not find encoder", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 t.IndexOf("InvalidEncoder", StringComparison.OrdinalIgnoreCase) >= 0)
-                return "Выбранный кодировщик телефону не подошёл.\n\n" +
-                       "Отключи и подключи телефон заново — программа подберёт другой.";
+                return Lang.T("Выбранный кодировщик телефону не подошёл.\n\nОтключи и подключи телефон заново — программа подберёт другой.", "The chosen encoder did not work on the phone.\n\nUnplug and replug the phone — the program will pick another one.");
 
             if (t.IndexOf("Device disconnected", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 t.IndexOf("device not found", StringComparison.OrdinalIgnoreCase) >= 0)
-                return "Телефон отключился. Проверь кабель.";
+                return Lang.T("Телефон отключился. Проверь кабель.", "The phone disconnected. Check the cable.");
 
             string[] lines = t.Replace("\r", "").Split('\n');
             StringBuilder last = new StringBuilder();
             for (int i = Math.Max(0, lines.Length - 5); i < lines.Length; i++)
                 if (lines[i].Trim().Length > 0) last.AppendLine(lines[i].Trim());
 
-            return "Трансляция закрылась сразу после запуска.\n\n" + last.ToString().Trim();
+            return Lang.T("Трансляция закрылась сразу после запуска.\n\n", "The stream closed right after starting.\n\n") + last.ToString().Trim();
         }
 
         static string Q(string s) { return "\"" + s + "\""; }
@@ -1391,7 +1474,7 @@ namespace PhoneScreen
             Assembly asm = Assembly.GetExecutingAssembly();
             using (Stream zip = asm.GetManifestResourceStream("gnirehtet.zip"))
             {
-                if (zip == null) throw new Exception("Внутри программы нет gnirehtet.");
+                if (zip == null) throw new Exception(Lang.T("Внутри программы нет gnirehtet.", "gnirehtet is missing inside the program."));
                 using (ZipArchive archive = new ZipArchive(zip, ZipArchiveMode.Read))
                 {
                     foreach (ZipArchiveEntry entry in archive.Entries)
@@ -1475,9 +1558,13 @@ namespace PhoneScreen
                 {
                     string res = RunGn("install " + serial, 90000);
                     if (res.IndexOf("Failure", StringComparison.OrdinalIgnoreCase) >= 0)
-                        return "Не удалось поставить на телефон помощника для интернета.\n\n" +
-                               "Возможно, телефон запрещает установку через USB. На Xiaomi это " +
-                               "пункт «Установка через USB» в меню для разработчиков.";
+                        return Lang.T(
+                            "Не удалось поставить на телефон помощника для интернета.\n\n" +
+                            "Возможно, телефон запрещает установку через USB. На Xiaomi это " +
+                            "пункт «Установка через USB» в меню для разработчиков.",
+                            "Could not install the internet helper on the phone.\n\n" +
+                            "The phone may block USB installs. On Xiaomi this is " +
+                            "«Install via USB» in Developer options.");
                 }
 
                 // если прошлый запуск умер аварийно, раздатчик мог остаться
@@ -1506,22 +1593,20 @@ namespace PhoneScreen
                 }
                 catch (Exception ex)
                 {
-                    return "Не удалось запустить раздачу интернета: " + ex.Message;
+                    return Lang.T("Не удалось запустить раздачу интернета: ", "Could not start internet sharing: ") + ex.Message;
                 }
 
                 Thread.Sleep(1500);
 
                 if (relay.HasExited)
-                    return "Раздача интернета не запустилась.\n\n" +
-                           "Скорее всего, порт 31416 занят другой программой.";
+                    return Lang.T("Раздача интернета не запустилась.\n\nСкорее всего, порт 31416 занят другой программой.", "Internet sharing did not start.\n\nMost likely port 31416 is taken by another program.");
 
                 string start = RunGn("start " + serial, 30000);
                 if (start.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     start.IndexOf("Cannot", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     Kill();
-                    return "Телефон не принял раздачу интернета.\n\n" +
-                           "Проверь, что на его экране нажато «ОК» в окне про VPN-подключение.";
+                    return Lang.T("Телефон не принял раздачу интернета.\n\nПроверь, что на его экране нажато «ОК» в окне про VPN-подключение.", "The phone did not accept internet sharing.\n\nMake sure «OK» was tapped in the VPN connection dialog on its screen.");
                 }
 
                 active = true;
@@ -1729,7 +1814,7 @@ namespace PhoneScreen
         readonly bool phoneKnown;
 
         Panel content;
-        ComboBox size, fps, bitrate, codec, audio, audioCodec;
+        ComboBox size, fps, bitrate, codec, audio, audioCodec, language;
         CheckBox control, screenOff, keepAwake, full, onTop, borderless, share, closeOnUnplug;
         Label shareHint;
         Label netState, netHint, controlHint;
@@ -1762,78 +1847,93 @@ namespace PhoneScreen
 
             int y = 18;
 
-            Head("Картинка", ref y);
-            size = Combo("Размер", ref y, new string[] {
-                "Как есть, без уменьшения", "1280 точек", "1600 точек",
-                "1920 точек (по умолчанию)", "2560 точек" });
-            fps = Combo("Кадры в секунду", ref y, new string[] {
-                "30", "45", "60 (по умолчанию)", "90", "120", "Без ограничения" });
-            bitrate = Combo("Битрейт", ref y, new string[] {
-                "4 Мбит — экономно", "6 Мбит", "8 Мбит", "12 Мбит",
-                "16 Мбит", "20 Мбит (по умолчанию)", "30 Мбит" });
-            codec = Combo("Кодек картинки", ref y, new string[] {
-                "H.264 — самый быстрый отклик (по умолчанию)",
-                "H.265 — чётче при том же битрейте, отклик чуть хуже",
-                "AV1 — лучшее сжатие, но кодировщик редкий и медленный",
-                "VP8 — старый, смысла почти нет",
-                "VP9 — как H.265, но поддержка хуже" });
+            Head(Lang.T("Язык / Language", "Language / Язык"), ref y);
+            language = Combo(Lang.T("Язык программы", "Program language"), ref y, new string[] {
+                Lang.T("Как в системе", "Follow system"),
+                "Русский",
+                "English" });
 
             y += 8;
-            Head("Звук", ref y);
-            audio = Combo("Куда идёт звук", ref y, new string[] {
-                "Автоматически (по версии Android)",
-                "В компьютер и в телефон",
-                "Только в компьютер",
-                "Выключить звук" });
-            audioCodec = Combo("Кодек звука", ref y, new string[] {
-                "Opus — лучший, меньше задержка (по умолчанию)",
-                "AAC — если Opus заикается",
-                "FLAC — без потерь, нужна широкая полоса",
-                "Raw — несжатый, только для локали" });
+            Head(Lang.T("Картинка", "Video"), ref y);
+            size = Combo(Lang.T("Размер", "Size"), ref y, new string[] {
+                Lang.T("Как есть, без уменьшения", "As is, no downscale"),
+                Lang.T("1280 точек", "1280 px"), Lang.T("1600 точек", "1600 px"),
+                Lang.T("1920 точек (по умолчанию)", "1920 px (default)"),
+                Lang.T("2560 точек", "2560 px") });
+            fps = Combo(Lang.T("Кадры в секунду", "Frames per second"), ref y, new string[] {
+                "30", "45", Lang.T("60 (по умолчанию)", "60 (default)"), "90", "120",
+                Lang.T("Без ограничения", "No limit") });
+            bitrate = Combo(Lang.T("Битрейт", "Bit rate"), ref y, new string[] {
+                Lang.T("4 Мбит — экономно", "4 Mbps — light"), Lang.T("6 Мбит", "6 Mbps"),
+                Lang.T("8 Мбит", "8 Mbps"), Lang.T("12 Мбит", "12 Mbps"),
+                Lang.T("16 Мбит", "16 Mbps"), Lang.T("20 Мбит (по умолчанию)", "20 Mbps (default)"),
+                Lang.T("30 Мбит", "30 Mbps") });
+            codec = Combo(Lang.T("Кодек картинки", "Video codec"), ref y, new string[] {
+                Lang.T("H.264 — самый быстрый отклик (по умолчанию)", "H.264 — lowest latency (default)"),
+                Lang.T("H.265 — чётче при том же битрейте, отклик чуть хуже", "H.265 — sharper at same bit rate, slightly higher latency"),
+                Lang.T("AV1 — лучшее сжатие, но кодировщик редкий и медленный", "AV1 — best compression, but the encoder is rare and slow"),
+                Lang.T("VP8 — старый, смысла почти нет", "VP8 — old, little reason to use"),
+                Lang.T("VP9 — как H.265, но поддержка хуже", "VP9 — like H.265, but worse support") });
 
             y += 8;
-            Head("Окно на компьютере", ref y);
-            full = Check("Открывать во весь экран", ref y);
-            onTop = Check("Поверх остальных окон", ref y);
-            borderless = Check("Без рамки", ref y);
+            Head(Lang.T("Звук", "Audio"), ref y);
+            audio = Combo(Lang.T("Куда идёт звук", "Audio output"), ref y, new string[] {
+                Lang.T("Автоматически (по версии Android)", "Automatic (by Android version)"),
+                Lang.T("В компьютер и в телефон", "PC and phone"),
+                Lang.T("Только в компьютер", "PC only"),
+                Lang.T("Выключить звук", "Mute audio") });
+            audioCodec = Combo(Lang.T("Кодек звука", "Audio codec"), ref y, new string[] {
+                Lang.T("Opus — лучший, меньше задержка (по умолчанию)", "Opus — best, lower latency (default)"),
+                Lang.T("AAC — если Opus заикается", "AAC — if Opus stutters"),
+                Lang.T("FLAC — без потерь, нужна широкая полоса", "FLAC — lossless, needs wide bandwidth"),
+                Lang.T("Raw — несжатый, только для локали", "Raw — uncompressed, local only") });
 
             y += 8;
-            Head("Управление", ref y);
-            control = Check("Управлять телефоном с компьютера (мышь и клавиатура)", ref y);
-            keepAwake = Check("Не давать телефону гаснуть", ref y);
-            screenOff = Check("Погасить экран самого телефона", ref y);
+            Head(Lang.T("Окно на компьютере", "Window on the PC"), ref y);
+            full = Check(Lang.T("Открывать во весь экран", "Open fullscreen"), ref y);
+            onTop = Check(Lang.T("Поверх остальных окон", "Always on top"), ref y);
+            borderless = Check(Lang.T("Без рамки", "Borderless"), ref y);
+
+            y += 8;
+            Head(Lang.T("Управление", "Control"), ref y);
+            control = Check(Lang.T("Управлять телефоном с компьютера (мышь и клавиатура)", "Control the phone from the PC (mouse and keyboard)"), ref y);
+            keepAwake = Check(Lang.T("Не давать телефону гаснуть", "Keep the phone awake"), ref y);
+            screenOff = Check(Lang.T("Погасить экран самого телефона", "Turn off the phone's own screen"), ref y);
 
             controlHint = new Label();
             controlHint.SetBounds(46, y, 580, 34);
             controlHint.ForeColor = Art.Dim;
             controlHint.Font = new Font("Segoe UI", 8.5f);
-            controlHint.Text = "Два пункта выше работают только вместе с управлением — " +
-                               "без него телефон их запрещает.";
+            controlHint.Text = Lang.T(
+                "Два пункта выше работают только вместе с управлением — без него телефон их запрещает.",
+                "The two options above work only together with control — without it the phone rejects them.");
             content.Controls.Add(controlHint);
             y += 40;
 
             y += 8;
-            Head("Интернет для телефона  (не обязательно)", ref y);
-            share = Check("Раздавать телефону интернет с этого компьютера", ref y);
+            Head(Lang.T("Интернет для телефона  (не обязательно)", "Internet for the phone  (optional)"), ref y);
+            share = Check(Lang.T("Раздавать телефону интернет с этого компьютера", "Share this PC's internet with the phone"), ref y);
 
             shareHint = new Label();
             shareHint.SetBounds(46, y, 590, 46);
             shareHint.ForeColor = Art.Dim;
             shareHint.Font = new Font("Segoe UI", 8.5f);
-            shareHint.Text = "Телефон возьмёт интернет из кабеля, а не из Wi-Fi. " +
-                             "На телефоне один раз появится окно про VPN — надо нажать «ОК».";
+            shareHint.Text = Lang.T(
+                "Телефон возьмёт интернет из кабеля, а не из Wi-Fi. На телефоне один раз появится окно про VPN — надо нажать «ОК».",
+                "The phone will take internet from the cable instead of Wi-Fi. A VPN dialog appears once on the phone — tap «OK».");
             content.Controls.Add(shareHint);
             y += 52;
 
-            Head("Подключение", ref y);
-            closeOnUnplug = Check("Закрывать программу, когда телефон отключают", ref y);
+            Head(Lang.T("Подключение", "Connection"), ref y);
+            closeOnUnplug = Check(Lang.T("Закрывать программу, когда телефон отключают", "Close the program when the phone is unplugged"), ref y);
 
             Label unplugHint = new Label();
             unplugHint.SetBounds(46, y, 590, 32);
             unplugHint.ForeColor = Art.Dim;
             unplugHint.Font = new Font("Segoe UI", 8.5f);
-            unplugHint.Text = "Закроется через " + Settings.UnplugDelaySec + " секунд после того, " +
-                              "как кабель вынут. Если воткнуть обратно — отмена.";
+            unplugHint.Text = Lang.T(
+                "Закроется через " + Settings.UnplugDelaySec + " секунд после того, как кабель вынут. Если воткнуть обратно — отмена.",
+                "Closes " + Settings.UnplugDelaySec + " seconds after the cable is pulled. Plug it back in to cancel.");
             content.Controls.Add(unplugHint);
             y += 40;
 
@@ -1850,26 +1950,57 @@ namespace PhoneScreen
             content.Controls.Add(netHint);
             y += 56;
 
-            netButton = Btn("Перейти на подключение по сети", 26, y, 300, 36, false);
+            netButton = Btn(Lang.T("Перейти на подключение по сети", "Switch to network connection"), 26, y, 300, 36, false);
             netButton.Click += delegate { OnGoNetwork(); };
             content.Controls.Add(netButton);
 
-            cableButton = Btn("Вернуться на провод", 338, y, 220, 36, false);
+            cableButton = Btn(Lang.T("Вернуться на провод", "Back to cable"), 338, y, 220, 36, false);
             cableButton.Click += delegate { OnGoCable(); };
             content.Controls.Add(cableButton);
             y += 52;
 
+            Head(Lang.T("Ярлыки", "Shortcuts"), ref y);
+            Button restoreLinks = Btn(Lang.T("Восстановить ярлыки на рабочем столе", "Restore desktop shortcuts"), 26, y, 360, 36, false);
+            restoreLinks.Click += delegate
+            {
+                Housekeeping.Recreate();
+                MessageBox.Show(Lang.T("Ярлыки созданы заново на рабочем столе.", "Desktop shortcuts have been recreated."),
+                    Paths.SettingsName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            };
+            content.Controls.Add(restoreLinks);
+            y += 52;
+
+            Head(Lang.T("О программе и проекты", "About & projects"), ref y);
+
+            AddLink(Lang.T("Этот проект на GitHub", "This project on GitHub"), Paths.UrlProject, ref y);
+            AddLink("scrcpy — " + Lang.T("вывод экрана (Apache 2.0)", "screen mirroring (Apache 2.0)"),
+                    Paths.UrlScrcpy, ref y);
+            AddLink("gnirehtet — " + Lang.T("интернет по USB (Apache 2.0)", "reverse tethering (Apache 2.0)"),
+                    Paths.UrlGnirehtet, ref y);
+
+            Label credit = new Label();
+            credit.SetBounds(26, y, 610, 40);
+            credit.ForeColor = Art.Dim;
+            credit.Font = new Font("Segoe UI", 8.5f);
+            credit.Text = Lang.T(
+                "Программа использует scrcpy и gnirehtet (© Genymobile / Romain Vimont), " +
+                "распространяемые без изменений. Это не официальный продукт Genymobile.",
+                "This program bundles scrcpy and gnirehtet (© Genymobile / Romain Vimont), " +
+                "distributed unmodified. Not an official Genymobile product.");
+            content.Controls.Add(credit);
+            y += 48;
+
             int footer = ClientSize.Height - 58;
 
-            saveButton = Btn("Сохранить", 26, footer, 200, 44, true);
+            saveButton = Btn(Lang.T("Сохранить", "Save"), 26, footer, 200, 44, true);
             saveButton.Click += delegate { Apply(); Close(); };
             Controls.Add(saveButton);
 
-            resetButton = Btn("Сбросить к обычным", 240, footer, 220, 44, false);
+            resetButton = Btn(Lang.T("Сбросить к обычным", "Reset to defaults"), 240, footer, 220, 44, false);
             resetButton.Click += delegate { LoadFrom(new Settings()); };
             Controls.Add(resetButton);
 
-            Button close = Btn("Отмена", 480, footer, 160, 44, false);
+            Button close = Btn(Lang.T("Отмена", "Cancel"), 480, footer, 160, 44, false);
             close.Click += delegate { Close(); };
             Controls.Add(close);
 
@@ -1892,6 +2023,23 @@ namespace PhoneScreen
             l.ForeColor = Art.Ink;
             content.Controls.Add(l);
             y += 28;
+        }
+
+        // кликабельная ссылка на веб-страницу
+        void AddLink(string text, string url, ref int y)
+        {
+            LinkLabel l = new LinkLabel();
+            l.SetBounds(40, y, 590, 22);
+            l.Text = text;
+            l.LinkColor = Art.Accent;
+            l.Font = new Font("Segoe UI", 9.5f);
+            l.LinkClicked += delegate
+            {
+                try { Process.Start(url); }
+                catch (Exception ex) { Log.Write("open url failed: " + ex.Message); }
+            };
+            content.Controls.Add(l);
+            y += 26;
         }
 
         ComboBox Combo(string label, ref int y, string[] items)
@@ -1983,6 +2131,7 @@ namespace PhoneScreen
             borderless.Checked = s.Borderless;
             share.Checked = s.ShareInternet;
             closeOnUnplug.Checked = s.CloseOnUnplug;
+            language.SelectedIndex = s.Language == "ru" ? 1 : s.Language == "en" ? 2 : 0;
 
             loading = false;
             SyncControl(false);
@@ -2013,9 +2162,11 @@ namespace PhoneScreen
             // выбранного кодека может не быть аппаратно на этом телефоне
             if (s.Codec != "h264" && engine.Cfg.EncoderName(s.Codec).Length == 0 && phoneKnown)
             {
-                MessageBox.Show(
+                MessageBox.Show(Lang.T(
                     "У этого телефона нет аппаратного кодировщика для выбранного кодека.\n\n" +
                     "Оставлю H.264 — он есть всегда и даёт самый быстрый отклик.",
+                    "This phone has no hardware encoder for the selected codec.\n\n" +
+                    "Keeping H.264 — it is always present and gives the lowest latency."),
                     Paths.SettingsName, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 s.Codec = "h264";
                 codec.SelectedIndex = 0;
@@ -2045,6 +2196,8 @@ namespace PhoneScreen
             s.Borderless = borderless.Checked;
             s.ShareInternet = share.Checked && !s.NetworkMode;
             s.CloseOnUnplug = closeOnUnplug.Checked;
+            s.Language = language.SelectedIndex == 1 ? "ru" : language.SelectedIndex == 2 ? "en" : "";
+            Lang.Ru = s.Language == "ru" ? true : s.Language == "en" ? false : Lang.SystemIsRussian();
 
             engine.Cfg.SaveSettingsOnly();
         }
@@ -2069,6 +2222,7 @@ namespace PhoneScreen
             if (loading || !share.Checked) return;
 
             DialogResult r1 = MessageBox.Show(
+                Lang.T(
                 "ПРЕДУПРЕЖДЕНИЕ 1 из 2\n\n" +
                 "Это не нужно для показа экрана. Картинка работает и без этого.\n\n" +
                 "На телефон поставится небольшая программа от авторов scrcpy. " +
@@ -2078,12 +2232,22 @@ namespace PhoneScreen
                 "Пока раздача включена, интернет телефону даёт компьютер, а не Wi-Fi. " +
                 "Если у компьютера интернет хуже, чем Wi-Fi у телефона, станет только хуже.\n\n" +
                 "Продолжить?",
+                "WARNING 1 of 2\n\n" +
+                "This is not needed for screen mirroring. The picture works without it.\n\n" +
+                "A small app by the scrcpy authors will be installed on the phone. " +
+                "When enabled, the phone shows a «VPN connection request» — tap «OK». " +
+                "It is not a virus: this is how Android allows routing all phone traffic " +
+                "through the cable to the PC.\n\n" +
+                "While sharing is on, the phone gets internet from the PC, not Wi-Fi. " +
+                "If the PC's internet is worse than the phone's Wi-Fi, it only gets worse.\n\n" +
+                "Continue?"),
                 Paths.SettingsName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
 
             if (r1 != DialogResult.Yes) { share.Checked = false; return; }
 
             DialogResult r2 = MessageBox.Show(
+                Lang.T(
                 "ПРЕДУПРЕЖДЕНИЕ 2 из 2\n\n" +
                 "Если во время игры выдернуть кабель, оборвётся не только картинка, " +
                 "но и интернет на телефоне. Сетевая игра в этот момент отвалится, " +
@@ -2092,6 +2256,13 @@ namespace PhoneScreen
                 "соединение с игрой уже разорвётся.\n\n" +
                 "Если матчи важны — оставь это выключенным.\n\n" +
                 "Точно включить?",
+                "WARNING 2 of 2\n\n" +
+                "If you pull the cable during a game, not only the picture drops but also " +
+                "the phone's internet. An online match will disconnect at that moment and be lost.\n\n" +
+                "The program returns the phone to its Wi-Fi within a couple of seconds, but " +
+                "the game connection is already broken.\n\n" +
+                "If matches matter — leave this off.\n\n" +
+                "Enable anyway?"),
                 Paths.SettingsName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
 
@@ -2106,25 +2277,37 @@ namespace PhoneScreen
             if (net)
             {
                 share.Checked = false;
-                shareHint.Text = "Недоступно, пока подключение идёт по сети: раздавать интернет " +
-                                 "по тому же каналу, по которому идёт картинка, нельзя.";
+                shareHint.Text = Lang.T(
+                    "Недоступно, пока подключение идёт по сети: раздавать интернет " +
+                    "по тому же каналу, по которому идёт картинка, нельзя.",
+                    "Unavailable while connected over the network: you can't share internet " +
+                    "over the same channel the picture goes through.");
             }
             else
             {
-                shareHint.Text = "Телефон возьмёт интернет из кабеля, а не из Wi-Fi. " +
-                                 "На телефоне один раз появится окно про VPN — надо нажать «ОК».";
+                shareHint.Text = Lang.T(
+                    "Телефон возьмёт интернет из кабеля, а не из Wi-Fi. " +
+                    "На телефоне один раз появится окно про VPN — надо нажать «ОК».",
+                    "The phone will take internet from the cable instead of Wi-Fi. " +
+                    "A VPN dialog appears once on the phone — tap «OK».");
             }
 
             netState.Text = net
-                ? "Сейчас: по сети  (" + engine.Cfg.S.NetworkAddr + ")"
-                : "Сейчас: по проводу";
+                ? Lang.T("Сейчас: по сети  (", "Now: over network  (") + engine.Cfg.S.NetworkAddr + ")"
+                : Lang.T("Сейчас: по проводу", "Now: over cable");
             netState.ForeColor = net ? Art.Warn : Art.Good;
 
             netHint.Text = net
-                ? "Пока включена сеть, размер ограничен " + Settings.NetMaxSize +
+                ? Lang.T(
+                  "Пока включена сеть, размер ограничен " + Settings.NetMaxSize +
                   " точками, а битрейт — " + Settings.NetMaxBitRate + " Мбит. " +
-                  "Вернись на провод, чтобы снять ограничение."
-                : "Обычный режим. Провод даёт лучшую картинку и самый быстрый отклик.";
+                  "Вернись на провод, чтобы снять ограничение.",
+                  "While the network is on, size is capped at " + Settings.NetMaxSize +
+                  " px and bit rate at " + Settings.NetMaxBitRate + " Mbps. " +
+                  "Go back to cable to remove the limit.")
+                : Lang.T(
+                  "Обычный режим. Провод даёт лучшую картинку и самый быстрый отклик.",
+                  "Normal mode. Cable gives the best picture and the lowest latency.");
 
             netButton.Enabled = !net && phoneKnown;
             cableButton.Enabled = net;
@@ -2138,18 +2321,26 @@ namespace PhoneScreen
         void OnGoNetwork()
         {
             DialogResult r1 = MessageBox.Show(
+                Lang.T(
                 "ПРЕДУПРЕЖДЕНИЕ 1 из 2\n\n" +
                 "Это режим для опытных. По сети картинка идёт заметно хуже, чем по проводу: " +
                 "выше задержка, возможны рывки и рассыпание изображения. Для игр, где важна " +
                 "реакция, это обычно не годится.\n\n" +
                 "Телефон и компьютер должны быть в одной сети.\n\n" +
                 "Продолжить?",
+                "WARNING 1 of 2\n\n" +
+                "This is an advanced mode. Over the network the picture is noticeably worse than " +
+                "over cable: higher latency, possible stutter and image breakup. For games where " +
+                "reaction matters, it usually won't do.\n\n" +
+                "The phone and the PC must be on the same network.\n\n" +
+                "Continue?"),
                 Paths.SettingsName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
 
             if (r1 != DialogResult.Yes) return;
 
             DialogResult r2 = MessageBox.Show(
+                Lang.T(
                 "ПРЕДУПРЕЖДЕНИЕ 2 из 2\n\n" +
                 "Пока включена сеть:\n" +
                 "  • размер картинки будет ограничен " + Settings.NetMaxSize + " точками;\n" +
@@ -2160,13 +2351,23 @@ namespace PhoneScreen
                 "Обычно этот режим не нужен: телефон может сидеть в интернете по Wi-Fi " +
                 "и при этом быть подключённым кабелем.\n\n" +
                 "Точно включить?",
+                "WARNING 2 of 2\n\n" +
+                "While the network is on:\n" +
+                "  • picture size will be capped at " + Settings.NetMaxSize + " px;\n" +
+                "  • bit rate will be capped at " + Settings.NetMaxBitRate + " Mbps;\n" +
+                "  • these two cannot be changed.\n\n" +
+                "The mode drops after a phone reboot. To restore everything you'll need " +
+                "the cable again.\n\n" +
+                "Usually this mode is not needed: the phone can stay on Wi-Fi internet " +
+                "while connected by cable.\n\n" +
+                "Enable anyway?"),
                 Paths.SettingsName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
 
             if (r2 != DialogResult.Yes) return;
 
             netButton.Enabled = false;
-            netState.Text = "Переключаю…";
+            netState.Text = Lang.T("Переключаю…", "Switching…");
             netState.ForeColor = Art.Dim;
 
             Thread t = new Thread(delegate ()
@@ -2180,7 +2381,7 @@ namespace PhoneScreen
                     {
                         if (error != null)
                         {
-                            MessageBox.Show("Не получилось.\n\n" + error,
+                            MessageBox.Show(Lang.T("Не получилось.\n\n", "It didn't work.\n\n") + error,
                                 Paths.SettingsName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                             SyncNetwork();
                             return;
@@ -2191,10 +2392,15 @@ namespace PhoneScreen
                         engine.Cfg.SaveSettingsOnly();
 
                         MessageBox.Show(
+                            Lang.T(
                             "Готово. Телефон отвечает по адресу " + address + ".\n\n" +
                             "Кабель можно отключить.\n\n" +
                             "Важно: после перезагрузки телефона этот режим слетает — чтобы " +
                             "включить его снова, понадобится кабель.",
+                            "Done. The phone responds at " + address + ".\n\n" +
+                            "You can unplug the cable now.\n\n" +
+                            "Note: after a phone reboot this mode drops — to turn it on again " +
+                            "you'll need the cable."),
                             Paths.SettingsName, MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                         SyncNetwork();
@@ -2285,23 +2491,23 @@ namespace PhoneScreen
             summary.Font = new Font("Segoe UI", 8.5f);
             Controls.Add(summary);
 
-            yesButton = MakeButton("Да, использовать этот", 268, 400, 300, 44, true);
+            yesButton = MakeButton(Lang.T("Да, использовать этот", "Yes, use this one"), 268, 400, 300, 44, true);
             yesButton.Visible = false;
             yesButton.Click += delegate { OnApprove(); };
             Controls.Add(yesButton);
 
-            noButton = MakeButton("Нет", 582, 400, 180, 44, false);
+            noButton = MakeButton(Lang.T("Нет", "No"), 582, 400, 180, 44, false);
             noButton.Visible = false;
             noButton.Click += delegate { OnReject(); };
             Controls.Add(noButton);
 
-            playButton = MakeButton("Показать экран", 268, 470, 300, 52, true);
+            playButton = MakeButton(Lang.T("Показать экран", "Show screen"), 268, 470, 300, 52, true);
             playButton.Font = new Font("Segoe UI", 12f, FontStyle.Bold);
             playButton.Enabled = false;
             playButton.Click += delegate { StartScrcpy(); };
             Controls.Add(playButton);
 
-            settingsButton = MakeButton("Настройки", 582, 470, 180, 52, false);
+            settingsButton = MakeButton(Lang.T("Настройки", "Settings"), 582, 470, 180, 52, false);
             settingsButton.Click += delegate { OpenSettings(); };
             Controls.Add(settingsButton);
 
@@ -2354,10 +2560,15 @@ namespace PhoneScreen
             if (Net.Active)
             {
                 DialogResult r = MessageBox.Show(
+                    Lang.T(
                     "Сейчас телефон берёт интернет с компьютера.\n\n" +
                     "Если закрыть это окно, раздача выключится, и телефон вернётся " +
                     "на свой Wi-Fi или мобильный интернет.\n\n" +
                     "Закрыть?",
+                    "The phone is currently getting internet from the PC.\n\n" +
+                    "If you close this window, sharing turns off and the phone returns " +
+                    "to its own Wi-Fi or mobile data.\n\n" +
+                    "Close?"),
                     Paths.AppName, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (r != DialogResult.Yes) { e.Cancel = true; return; }
@@ -2477,29 +2688,38 @@ namespace PhoneScreen
             switch (s.Stage)
             {
                 case Stage.Starting:
-                    Set("Запускаюсь…", "Секунду.");
+                    Set(Lang.T("Запускаюсь…", "Starting…"), Lang.T("Секунду.", "One moment."));
                     break;
 
                 case Stage.Extracting:
-                    Set("Готовлю программу…",
-                        "Это делается один раз, при первом запуске. Несколько секунд.");
+                    Set(Lang.T("Готовлю программу…", "Preparing the program…"),
+                        Lang.T("Это делается один раз, при первом запуске. Несколько секунд.",
+                               "This is done once, on first launch. A few seconds."));
                     break;
 
                 case Stage.NoPhone:
-                    Set("Подключи телефон к компьютеру",
+                    Set(Lang.T("Подключи телефон к компьютеру", "Connect the phone to the PC"),
+                        Lang.T(
                         "Возьми USB-кабель и воткни телефон в компьютер.\n\n" +
                         "Кабель должен уметь передавать данные, а не только заряжать. Если телефон " +
                         "заряжается, но здесь ничего не меняется — попробуй другой кабель.\n\n" +
                         "Через переходник или хаб тоже работает: телефон нужно втыкать в порт " +
                         "для данных, обычно он помечен значком SS. Порт только для зарядки " +
                         "не подойдёт.\n\n" +
-                        "Окно закрывать не надо, оно само всё заметит.");
+                        "Окно закрывать не надо, оно само всё заметит.",
+                        "Take a USB cable and plug the phone into the PC.\n\n" +
+                        "The cable must carry data, not just charge. If the phone charges " +
+                        "but nothing changes here — try another cable.\n\n" +
+                        "Through an adapter or hub works too: plug the phone into a data port, " +
+                        "usually marked SS. A charge-only port won't do.\n\n" +
+                        "No need to close this window, it notices everything by itself."));
                     break;
 
                 case Stage.AppleDevice:
-                    Set("Это " + (s.Detail.Length > 0 ? s.Detail : "устройство Apple") +
-                            " — с ним так нельзя",
-                        (s.UsbName.Length > 0 ? "Подключено: " + s.UsbName + "\n\n" : "") +
+                    Set(Lang.T("Это ", "This is ") + (s.Detail.Length > 0 ? s.Detail : Lang.T("устройство Apple", "an Apple device")) +
+                            Lang.T(" — с ним так нельзя", " — this won't work with it"),
+                        (s.UsbName.Length > 0 ? Lang.T("Подключено: ", "Connected: ") + s.UsbName + "\n\n" : "") +
+                        Lang.T(
                         "Программа выводит на компьютер экран телефонов на Android. iPhone и iPad " +
                         "так не умеют: Apple закрыла эту возможность в самой iOS, обойти это " +
                         "не может ни одна программа.\n\n" +
@@ -2508,129 +2728,177 @@ namespace PhoneScreen
                         "      • Apple TV и AirPlay;\n" +
                         "      • на Windows — программы, которые ловят AirPlay по Wi-Fi.\n\n" +
                         "Ничего не сломано. Отключи это устройство и подключи Android-телефон — " +
-                        "окно переключится само.");
+                        "окно переключится само.",
+                        "The program mirrors the screen of Android phones. iPhone and iPad " +
+                        "can't do this: Apple closed this off inside iOS itself, and no program " +
+                        "can get around it.\n\n" +
+                        "What you can do instead:\n" +
+                        "      • on a Mac — a cable and the QuickTime Player app;\n" +
+                        "      • Apple TV and AirPlay;\n" +
+                        "      • on Windows — apps that catch AirPlay over Wi-Fi.\n\n" +
+                        "Nothing is broken. Unplug this device and connect an Android phone — " +
+                        "the window switches by itself."));
                     break;
 
                 case Stage.PhoneNoDebug:
-                    Set("Устройство вижу. Осталась настройка на нём",
-                        (s.UsbName.Length > 0 ? "Подключено: " + s.UsbName + "\n\n" : "") +
-                        "Если это Android-телефон, открой на нём:\n\n" +
+                    Set(Lang.T("Устройство вижу. Осталась настройка на нём", "I see the device. One setting left on it"),
+                        (s.UsbName.Length > 0 ? Lang.T("Подключено: ", "Connected: ") + s.UsbName + "\n\n" : "") +
+                        Lang.T("Если это Android-телефон, открой на нём:\n\n", "If this is an Android phone, open on it:\n\n") +
                         Brands.DevModePath(s.Brand) + "\n\n" +
-                        "Там включить «Отладка по USB».\n\n" +
+                        Lang.T("Там включить «Отладка по USB».\n\n", "There, turn on «USB debugging».\n\n") +
+                        Lang.T(
                         "А если это не телефон — фотоаппарат, плеер, флешка — отключи его " +
-                        "и подключи телефон.");
+                        "и подключи телефон.",
+                        "And if it's not a phone — a camera, a player, a flash drive — unplug it " +
+                        "and connect a phone."));
                     break;
 
                 case Stage.Unauthorized:
-                    Set("Посмотри на экран телефона",
+                    Set(Lang.T("Посмотри на экран телефона", "Look at the phone's screen"),
+                        Lang.T(
                         "На нём появилось окно «Разрешить отладку по USB?».\n\n" +
                         "Нажми «Разрешить».\n\n" +
                         "Если есть галочка «Всегда разрешать с этого компьютера» — поставь её, " +
                         "тогда телефон больше не будет спрашивать.\n\n" +
-                        "Окна нет? Разблокируй телефон, вытащи кабель и воткни снова.");
+                        "Окна нет? Разблокируй телефон, вытащи кабель и воткни снова.",
+                        "A dialog «Allow USB debugging?» has appeared on it.\n\n" +
+                        "Tap «Allow».\n\n" +
+                        "If there's an «Always allow from this computer» checkbox — tick it, " +
+                        "then the phone won't ask again.\n\n" +
+                        "No dialog? Unlock the phone, pull the cable and plug it back in."));
                     break;
 
                 case Stage.Authorizing:
-                    Set("Секунду…", "Телефон и компьютер договариваются.");
+                    Set(Lang.T("Секунду…", "One moment…"), Lang.T("Телефон и компьютер договариваются.", "The phone and the PC are handshaking."));
                     break;
 
                 case Stage.Offline:
-                    Set("Телефон не отвечает",
+                    Set(Lang.T("Телефон не отвечает", "The phone doesn't respond"),
+                        Lang.T(
                         "Разблокируй телефон, вытащи кабель и воткни снова.\n\n" +
                         "Если телефон подключён через хаб — попробуй другой порт на хабе " +
-                        "или воткни телефон напрямую в компьютер.");
+                        "или воткни телефон напрямую в компьютер.",
+                        "Unlock the phone, pull the cable and plug it back in.\n\n" +
+                        "If the phone is connected through a hub — try another port on the hub " +
+                        "or plug the phone straight into the PC."));
                     break;
 
                 case Stage.Multiple:
-                    Set("Подключено несколько устройств",
-                        "Компьютер видит сразу несколько:\n\n" + s.Detail + "\n\n" +
-                        "Отключи лишние и оставь только нужный телефон.");
+                    Set(Lang.T("Подключено несколько устройств", "Several devices connected"),
+                        Lang.T("Компьютер видит сразу несколько:\n\n", "The PC sees several at once:\n\n") + s.Detail + "\n\n" +
+                        Lang.T("Отключи лишние и оставь только нужный телефон.", "Unplug the extras and leave only the phone you need."));
                     break;
 
                 case Stage.AdbConflict:
-                    Set("Мешает другая программа",
+                    Set(Lang.T("Мешает другая программа", "Another program is interfering"),
+                        Lang.T(
                         "На компьютере уже работает другая версия ADB — обычно её запускают " +
                         "Android Studio или программы для прошивки телефонов.\n\n" +
-                        "Закрой их, вытащи и воткни кабель. Если не помогает — перезагрузи компьютер.");
+                        "Закрой их, вытащи и воткни кабель. Если не помогает — перезагрузи компьютер.",
+                        "Another version of ADB is already running — usually started by " +
+                        "Android Studio or phone-flashing tools.\n\n" +
+                        "Close them, replug the cable. If that doesn't help — restart the PC."));
                     break;
 
                 case Stage.DifferentPhone:
-                    Set("Это другой телефон",
-                        "Раньше здесь был настроен:\n" +
+                    Set(Lang.T("Это другой телефон", "This is a different phone"),
+                        Lang.T("Раньше здесь был настроен:\n", "Previously set up here:\n") +
                         "      " + Describe(s.SavedModel, s.SavedSerial) + "\n\n" +
-                        "А сейчас подключён:\n" +
+                        Lang.T("А сейчас подключён:\n", "Now connected:\n") +
                         "      " + Describe(s.Model, s.Serial) + "\n\n" +
+                        Lang.T(
                         "Переключиться на новый? Программа заново подберёт под него настройки.\n\n" +
-                        "Если это не то устройство — нажми «Нет».");
+                        "Если это не то устройство — нажми «Нет».",
+                        "Switch to the new one? The program will pick settings for it again.\n\n" +
+                        "If this is the wrong device — press «No»."));
                     break;
 
                 case Stage.WrongPhone:
-                    Set("Подключён не тот телефон",
-                        "Сейчас подключён:\n" +
+                    Set(Lang.T("Подключён не тот телефон", "The wrong phone is connected"),
+                        Lang.T("Сейчас подключён:\n", "Now connected:\n") +
                         "      " + Describe(s.Model, s.Serial) + "\n\n" +
                         (s.SavedModel.Length > 0
-                            ? "А настроен был:\n      " + Describe(s.SavedModel, s.SavedSerial) + "\n\n"
+                            ? Lang.T("А настроен был:\n      ", "But set up was:\n      ") + Describe(s.SavedModel, s.SavedSerial) + "\n\n"
                             : "") +
+                        Lang.T(
                         "Отключи это устройство и подключи нужный телефон.\n\n" +
-                        "Или нажми кнопку ниже, чтобы всё-таки работать с этим.");
+                        "Или нажми кнопку ниже, чтобы всё-таки работать с этим.",
+                        "Unplug this device and connect the right phone.\n\n" +
+                        "Or press the button below to use this one anyway."));
                     break;
 
                 case Stage.NetworkSearching:
-                    Set("Ищу телефон в сети…",
-                        "Адрес: " + s.Detail + "\n\n" +
-                        "Телефон должен быть включён и находиться в той же сети, что и компьютер.");
+                    Set(Lang.T("Ищу телефон в сети…", "Looking for the phone on the network…"),
+                        Lang.T("Адрес: ", "Address: ") + s.Detail + "\n\n" +
+                        Lang.T("Телефон должен быть включён и находиться в той же сети, что и компьютер.",
+                               "The phone must be on and on the same network as the PC."));
                     break;
 
                 case Stage.NetworkLost:
-                    Set("Телефон в сети не отвечает",
-                        "Адрес: " + s.Detail + "\n\n" +
+                    Set(Lang.T("Телефон в сети не отвечает", "The phone doesn't respond on the network"),
+                        Lang.T("Адрес: ", "Address: ") + s.Detail + "\n\n" +
+                        Lang.T(
                         "Проверь, что телефон включён и подключён к той же сети.\n\n" +
                         "Если не помогает — подключи телефон кабелем и в настройках нажми " +
-                        "«Вернуться на провод».");
+                        "«Вернуться на провод».",
+                        "Make sure the phone is on and connected to the same network.\n\n" +
+                        "If that doesn't help — connect the phone by cable and in settings press " +
+                        "«Back to cable»."));
                     break;
 
                 case Stage.Probing:
-                    Set("Проверяю телефон…",
+                    Set(Lang.T("Проверяю телефон…", "Checking the phone…"),
                         (s.Model.Length > 0 ? s.Model + "\n\n" : "") +
+                        Lang.T(
                         "Смотрю, какие кодировщики он умеет, и выбираю подходящий. " +
-                        "Несколько секунд, и только при первом подключении этого телефона.");
+                        "Несколько секунд, и только при первом подключении этого телефона.",
+                        "Checking which encoders it has and picking a suitable one. " +
+                        "A few seconds, and only the first time this phone is connected."));
                     break;
 
                 case Stage.NoEncoder:
-                    Set("Этот телефон не подойдёт",
+                    Set(Lang.T("Этот телефон не подойдёт", "This phone won't work"),
                         (s.Detail.Length > 0 ? s.Detail + "\n\n" : "") +
+                        Lang.T(
                         "У него нет аппаратного кодировщика видео. Программный грузит процессор " +
-                        "телефона, тот греется и начинает тормозить — поэтому запускать не буду.");
+                        "телефона, тот греется и начинает тормозить — поэтому запускать не буду.",
+                        "It has no hardware video encoder. A software one loads the phone's CPU, " +
+                        "it heats up and starts to lag — so I won't launch."));
                     break;
 
                 case Stage.Ready:
-                    Set("Готово",
+                    Set(Lang.T("Готово", "Ready"),
                         (s.Model.Length > 0 ? s.Model + "\n" : "") +
                         (s.Android.Length > 0 ? "Android " + s.Android + "\n" : "") +
                         TransportLine() + "\n" +
-                        "Кодировщик подобран сам: " + engine.Cfg.EncoderH264 + "\n\n" +
+                        Lang.T("Кодировщик подобран сам: ", "Encoder picked automatically: ") + engine.Cfg.EncoderH264 + "\n\n" +
+                        Lang.T(
                         "Нажми «Показать экран», а потом запусти на телефоне то, что нужно.\n\n" +
                         "Картинка появится в отдельном окне на компьютере. Если телефон греется — " +
-                        "уменьши размер и битрейт в настройках.");
+                        "уменьши размер и битрейт в настройках.",
+                        "Press «Show screen», then start whatever you need on the phone.\n\n" +
+                        "The picture appears in a separate window on the PC. If the phone heats up — " +
+                        "lower the size and bit rate in settings."));
                     ShowSummary();
                     break;
 
                 case Stage.Running:
-                    Set("Идёт трансляция", RunningText());
+                    Set(Lang.T("Идёт трансляция", "Streaming"), RunningText());
                     break;
 
                 case Stage.Closed:
-                    Set("Трансляция закрыта", "Нажми «Показать экран», чтобы включить снова.");
+                    Set(Lang.T("Трансляция закрыта", "Stream closed"),
+                        Lang.T("Нажми «Показать экран», чтобы включить снова.", "Press «Show screen» to start again."));
                     break;
 
                 case Stage.Failed:
-                    Set("Не получилось", s.Detail);
+                    Set(Lang.T("Не получилось", "It didn't work"), s.Detail);
                     break;
             }
 
             yesButton.Visible = confirm || wrong;
             noButton.Visible = confirm;
-            yesButton.Text = wrong ? "Всё равно использовать этот" : "Да, использовать этот";
+            yesButton.Text = wrong ? Lang.T("Всё равно использовать этот", "Use this one anyway") : Lang.T("Да, использовать этот", "Yes, use this one");
             yesButton.Width = wrong ? 340 : 300;
 
             summary.Visible = (s.Stage == Stage.Ready);
@@ -2682,9 +2950,12 @@ namespace PhoneScreen
 
             if (left > 0)
             {
-                Set("Телефон отключён",
+                Set(Lang.T("Телефон отключён", "The phone is disconnected"),
+                    Lang.T(
                     "Программа закроется через " + left + " сек.\n\n" +
-                    "Если это случайно — просто воткни кабель обратно, и закрытие отменится.");
+                    "Если это случайно — просто воткни кабель обратно, и закрытие отменится.",
+                    "The program will close in " + left + " s.\n\n" +
+                    "If this is accidental — just plug the cable back in, and the close is cancelled."));
                 return;
             }
 
@@ -2759,9 +3030,9 @@ namespace PhoneScreen
         {
             switch (transport)
             {
-                case Transport.UsbDirect: return "Подключение: кабель напрямую";
-                case Transport.UsbHub: return "Подключение: кабель через переходник (хаб)";
-                case Transport.Network: return "Подключение: по сети";
+                case Transport.UsbDirect: return Lang.T("Подключение: кабель напрямую", "Connection: cable, direct");
+                case Transport.UsbHub: return Lang.T("Подключение: кабель через переходник (хаб)", "Connection: cable through an adapter (hub)");
+                case Transport.Network: return Lang.T("Подключение: по сети", "Connection: over network");
                 default: return "";
             }
         }
@@ -2769,30 +3040,33 @@ namespace PhoneScreen
         void ShowSummary()
         {
             Settings s = engine.Cfg.S;
-            string sz = s.EffectiveMaxSize == 0 ? "без уменьшения" : s.EffectiveMaxSize + " точек";
-            string f = s.MaxFps == 0 ? "без ограничения" : s.MaxFps + " к/с";
+            string sz = s.EffectiveMaxSize == 0 ? Lang.T("без уменьшения", "no downscale") : s.EffectiveMaxSize + Lang.T(" точек", " px");
+            string f = s.MaxFps == 0 ? Lang.T("без ограничения", "no limit") : s.MaxFps + Lang.T(" к/с", " fps");
             string a =
-                s.Audio == "off" ? "звук выключен" :
-                s.Audio == "pc" ? "звук в компьютер" :
-                s.Audio == "both" ? "звук в компьютер и телефон" : "звук автоматически";
+                s.Audio == "off" ? Lang.T("звук выключен", "audio off") :
+                s.Audio == "pc" ? Lang.T("звук в компьютер", "audio to PC") :
+                s.Audio == "both" ? Lang.T("звук в компьютер и телефон", "audio to PC and phone") : Lang.T("звук автоматически", "audio automatic");
 
-            summary.Text = sz + "   •   " + f + "   •   " + s.EffectiveBitRate + " Мбит   •   " +
+            summary.Text = sz + "   •   " + f + "   •   " + s.EffectiveBitRate + Lang.T(" Мбит", " Mbps") + "   •   " +
                            s.Codec.ToUpperInvariant().Replace("H264","H.264").Replace("H265","H.265") +
                            "   •   " + a +
-                           (s.PcControl ? "   •   управление с ПК" : "") +
-                           (Net.Active ? "\nИнтернет телефону раздаётся с компьютера — " +
-                                         "пока это окно открыто" : "");
+                           (s.PcControl ? Lang.T("   •   управление с ПК", "   •   PC control") : "") +
+                           (Net.Active ? Lang.T("\nИнтернет телефону раздаётся с компьютера — пока это окно открыто",
+                                                "\nInternet is shared to the phone from the PC — while this window is open") : "");
         }
 
         static string RunningText()
         {
-            return "Окно с картинкой открыто. Запусти на телефоне то, что нужно показать.\n\n" +
-                   "Это окно можно закрыть — на трансляцию это не повлияет.";
+            return Lang.T(
+                "Окно с картинкой открыто. Запусти на телефоне то, что нужно показать.\n\n" +
+                "Это окно можно закрыть — на трансляцию это не повлияет.",
+                "The picture window is open. Start whatever you want to show on the phone.\n\n" +
+                "You can close this window — it won't affect the stream.");
         }
 
         static string Describe(string model, string serial)
         {
-            string m = (model == null || model.Length == 0) ? "Android-устройство" : model;
+            string m = (model == null || model.Length == 0) ? Lang.T("Android-устройство", "Android device") : model;
             if (serial != null && serial.Length > 0) m += "   (" + serial + ")";
             return m;
         }
@@ -2832,7 +3106,7 @@ namespace PhoneScreen
             busy = true;
             playButton.Enabled = false;
             summary.Visible = false;
-            Set("Запускаю…", "Секунду.");
+            Set(Lang.T("Запускаю…", "Launching…"), Lang.T("Секунду.", "One moment."));
 
             Thread t = new Thread(delegate ()
             {
@@ -2848,7 +3122,7 @@ namespace PhoneScreen
                         running = false;
                         stage = Stage.Failed;
                         picture.Invalidate();
-                        Set("Не удалось запустить", error);
+                        Set(Lang.T("Не удалось запустить", "Couldn't launch"), error);
                         playButton.Enabled = true;
                         return;
                     }
@@ -2857,7 +3131,7 @@ namespace PhoneScreen
                     running = true;
                     stage = Stage.Running;
                     picture.Invalidate();
-                    Set("Идёт трансляция", RunningText());
+                    Set(Lang.T("Идёт трансляция", "Streaming"), RunningText());
 
                     p.Exited += delegate { Post(OnScrcpyClosed); };
                     try { if (p.HasExited) Post(OnScrcpyClosed); }
@@ -2875,7 +3149,7 @@ namespace PhoneScreen
             scrcpy = null;
             stage = Stage.Closed;
             picture.Invalidate();
-            Set("Трансляция закрыта", "Нажми «Показать экран», чтобы включить снова.");
+            Set(Lang.T("Трансляция закрыта", "Stream closed"), Lang.T("Нажми «Показать экран», чтобы включить снова.", "Press «Show screen» to start again."));
             playButton.Enabled = true;
         }
 
@@ -2900,6 +3174,14 @@ namespace PhoneScreen
         static volatile bool completed = false;
         static int busy = 0;
         static DateTime lastTry = DateTime.MinValue;
+
+        // принудительно пересоздать ярлыки (кнопка в настройках)
+        public static void Recreate()
+        {
+            completed = false;
+            lastTry = DateTime.MinValue;
+            RunOnce();
+        }
 
         public static void RunOnce()
         {
@@ -2942,9 +3224,10 @@ namespace PhoneScreen
                     string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                     if (Directory.Exists(desktop))
                     {
-                        Make(desktop, Paths.AppName, target, "", "Экран телефона на компьютере");
+                        Make(desktop, Paths.AppName, target, "",
+                             Lang.T("Экран телефона на компьютере", "Phone screen on the PC"));
                         Make(desktop, Paths.SettingsName, target, "--settings",
-                             "Настройки трансляции экрана");
+                             Lang.T("Настройки трансляции экрана", "Screen streaming settings"));
                     }
 
                     completed = copied;
@@ -3050,14 +3333,17 @@ namespace PhoneScreen
             {
                 Engine engine = new Engine();
 
+                // применяем сохранённый выбор языка до открытия любого окна
+                Lang.Apply(engine.Cfg.S.Language);
+
                 if (settingsOnly)
                 {
                     if (!engine.EnsureInstalled())
                     {
                         MessageBox.Show(
-                            "Не удалось подготовить программу.\n\n" +
-                            "Запусти сначала «" + Paths.AppName + "» — он всё установит, " +
-                            "потом открой настройки.",
+                            Lang.T("Не удалось подготовить программу.\n\n", "Could not prepare the program.\n\n") +
+                            Lang.T("Запусти сначала «", "Run «") + Paths.AppName + Lang.T("» — он всё установит, ", "» first — it will install everything, ") +
+                            Lang.T("потом открой настройки.", "then open settings."),
                             Paths.SettingsName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
@@ -3078,7 +3364,7 @@ namespace PhoneScreen
             try
             {
                 MessageBox.Show(
-                    "Что-то пошло не так.\n\n" + (ex == null ? "" : ex.Message),
+                    Lang.T("Что-то пошло не так.\n\n", "Something went wrong.\n\n") + (ex == null ? "" : ex.Message),
                     Paths.AppName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch { }
