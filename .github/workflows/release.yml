@@ -1,0 +1,83 @@
+name: build & release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:        # ручной прогон без создания релиза
+
+permissions:
+  contents: write           # нужно, чтобы gh release смог создать релиз
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Сверить контрольные суммы архивов
+        shell: pwsh
+        run: |
+          $bad = 0
+          Get-Content deps/SHA256SUMS.txt | Where-Object { $_.Trim() } | ForEach-Object {
+            $expected, $name = $_ -split '\s+', 2
+            $name = $name.Trim()
+            $actual = (Get-FileHash "deps/$name" -Algorithm SHA256).Hash.ToLower()
+            if ($actual -ne $expected.ToLower()) {
+              Write-Host "::error::Не совпала сумма: $name"
+              $bad++
+            } else {
+              Write-Host "OK  $name"
+            }
+          }
+          if ($bad -gt 0) { exit 1 }
+
+      - name: Определить версию из тега
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
+          } else {
+            $tag = '0.0.0'    # ручной прогон
+          }
+          "TAG=$tag"                        | Out-File $env:GITHUB_ENV -Append
+          "VER=$($tag -replace '\.', '_')"  | Out-File $env:GITHUB_ENV -Append
+          Write-Host "тег $tag -> ScrcpyForStreamer-win64-v$($tag -replace '\.', '_').exe"
+
+      - name: Собрать
+        shell: cmd
+        run: call build.bat
+
+      - name: Проверить, что кириллица не поехала
+        shell: pwsh
+        run: |
+          $exe = "dist/ScrcpyForStreamer-win64-v${env:VER}.exe"
+          $bytes = [IO.File]::ReadAllBytes($exe)
+          $text = [Text.Encoding]::Unicode.GetString($bytes)
+          if ($text -notmatch 'Телефон') {
+            Write-Host "::error::В exe нет корректных русских строк — проверь /codepage:65001"
+            exit 1
+          }
+          Write-Host "кодировка в порядке, размер $([math]::Round($bytes.Length/1MB,2)) МБ"
+
+      - name: Сохранить сборку как артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScrcpyForStreamer-win64-v${{ env.VER }}
+          path: dist/*.exe
+          if-no-files-found: error
+
+      - name: Опубликовать релиз
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $exe = "dist/ScrcpyForStreamer-win64-v${env:VER}.exe"
+          $existing = gh release view $env:TAG 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG $exe --clobber
+          } else {
+            gh release create $env:TAG $exe --title "v. $env:TAG" --generate-notes
+          }
