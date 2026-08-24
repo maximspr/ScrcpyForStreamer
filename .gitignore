@@ -1,12 +1,16 @@
-# Чужие сборки — их не кладём в репозиторий, скачиваются с официальных страниц.
-# См. README, раздел «Как собрать самому».
-scrcpy.zip
-gnirehtet.zip
-scrcpy-win64-*.zip
-gnirehtet-*.zip
+# Официальные сборки Genymobile лежат в deps/ вместе с SHA256SUMS.txt.
+# Проверка: cd deps && sha256sum -c SHA256SUMS.txt
+!deps/*.zip
+
+# Случайные копии архивов в корне — не нужны, собираем из deps/
+/scrcpy.zip
+/gnirehtet.zip
+/scrcpy-win64-*.zip
+/gnirehtet-*.zip
 
 # Результат сборки — публикуется через Releases, а не в дереве исходников.
-PhoneScreen.exe
+dist/
+ScrcpyForStreamer-win64-*.exe
 *.exe
 !/*.ico
 

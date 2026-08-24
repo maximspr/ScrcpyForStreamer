@@ -1,16 +1,28 @@
 @echo off
-rem Пересборка PhoneScreen.exe на Windows.
-rem Рядом должны лежать: PhoneScreen.cs, app.ico, scrcpy.zip, gnirehtet.zip
-rem   scrcpy.zip    - официальный scrcpy-win64-v4.1.zip
-rem   gnirehtet.zip - официальный gnirehtet-rust-win64-v2.5.1.zip
+rem Пересборка ScrcpyForStreamer на Windows.
+rem Архивы лежат в deps\ под официальными именами; имя ресурса внутри exe
+rem задаётся вторым параметром /resource и остаётся scrcpy.zip / gnirehtet.zip.
+rem При выпуске новой версии менять только VER.
+
+set VER=1_0_0
+set OUT=dist\ScrcpyForStreamer-win64-v%VER%.exe
+
+set SCRCPY=deps\scrcpy-win64-v4.1.zip
+set GNIREHTET=deps\gnirehtet-rust-win64-v2.5.1.zip
+
+if not exist "%SCRCPY%"    (echo. & echo НЕ НАЙДЕН: %SCRCPY%    & pause & exit /b 1)
+if not exist "%GNIREHTET%" (echo. & echo НЕ НАЙДЕН: %GNIREHTET% & pause & exit /b 1)
 
 set CSC=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe
 if not exist "%CSC%" set CSC=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\csc.exe
+if not exist "%CSC%" (echo. & echo НЕ НАЙДЕН КОМПИЛЯТОР csc.exe & pause & exit /b 1)
 
-"%CSC%" /nologo /target:winexe /optimize+ /win32icon:app.ico /out:PhoneScreen.exe ^
+if not exist dist mkdir dist
+
+"%CSC%" /nologo /target:winexe /optimize+ /win32icon:app.ico /out:"%OUT%" ^
   /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll ^
   /r:System.Management.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
-  /resource:scrcpy.zip,scrcpy.zip /resource:gnirehtet.zip,gnirehtet.zip PhoneScreen.cs
+  /resource:"%SCRCPY%",scrcpy.zip /resource:"%GNIREHTET%",gnirehtet.zip PhoneScreen.cs
 
 if errorlevel 1 (echo. & echo СБОРКА НЕ УДАЛАСЬ & pause & exit /b 1)
-echo. & echo Готово: PhoneScreen.exe & pause
+echo. & echo Готово: %OUT% & pause
