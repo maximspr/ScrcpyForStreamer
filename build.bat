@@ -7,7 +7,9 @@ rem /codepage:65001 обязателен: ScrcpyForStreamer.cs в UTF-8 без B
 rem русские строки на машине с другой ANSI-кодировкой превратятся в мусор.
 
 if "%VER%"=="" set VER=1_0_0
-set OUT=dist\ScrcpyForStreamer-win64-v%VER%.exe
+rem LABEL задаёт CI: у релиза это v1_0_2, у ручного прогона dev-<sha>.
+if "%LABEL%"=="" set LABEL=v%VER%
+set OUT=dist\ScrcpyForStreamer-win64-%LABEL%.exe
 
 set SCRCPY=deps\scrcpy-win64-v4.1.zip
 set GNIREHTET=deps\gnirehtet-rust-win64-v2.5.1.zip

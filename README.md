@@ -268,14 +268,18 @@ git tag -a 1.0.2 -m "ScrcpyForStreamer 1.0.2"
 git push origin 1.0.2
 ```
 
-CI does the rest. The tag uses dots and no `v` prefix; the file name uses underscores; the
-conversion is automatic.
+CI does the rest. The tag uses dots and no `v` prefix; the release file name uses underscores;
+the conversion is automatic.
+
+A manual run is not a release, so its file is named after the commit instead of a version —
+`ScrcpyForStreamer-win64-dev-<short-sha>.exe`. That way a test build can never be mistaken for
+a published one.
 
 ### CI/CD
 
 One workflow, [`.github/workflows/release.yml`](.github/workflows/release.yml), on
 `windows-latest`, triggered by a version tag or manually. A manual run builds and uploads the
-artifact without publishing a release.
+artifact without publishing a release, and names it `dev-<short-sha>`.
 
 | Step | Fails when |
 |---|---|

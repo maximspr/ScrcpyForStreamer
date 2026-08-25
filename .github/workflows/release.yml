@@ -87,17 +87,23 @@ jobs:
 
           if ($bad -gt 0) { exit 1 }
 
-      - name: Определить версию из тега
+      - name: Определить имя сборки
         shell: pwsh
         run: |
           if ($env:GITHUB_REF -like 'refs/tags/*') {
-            $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
+            # Релиз: имя из тега, 1.0.2 -> v1_0_2
+            $tag   = $env:GITHUB_REF -replace '^refs/tags/', ''
+            $label = 'v' + ($tag -replace '\.', '_')
           } else {
-            $tag = '0.0.0'    # ручной прогон
+            # Ручной прогон релизом не является. Имя нарочно не похоже на
+            # номер версии: иначе такую сборку легко принять за выпуск 0.0.0.
+            $tag   = ''
+            $label = 'dev-' + $env:GITHUB_SHA.Substring(0, 7)
           }
-          "TAG=$tag"                        | Out-File $env:GITHUB_ENV -Append
-          "VER=$($tag -replace '\.', '_')"  | Out-File $env:GITHUB_ENV -Append
-          Write-Host "тег $tag -> ScrcpyForStreamer-win64-v$($tag -replace '\.', '_').exe"
+          "TAG=$tag"                                    | Out-File $env:GITHUB_ENV -Append
+          "LABEL=$label"                                | Out-File $env:GITHUB_ENV -Append
+          "OUT=dist/ScrcpyForStreamer-win64-$label.exe" | Out-File $env:GITHUB_ENV -Append
+          Write-Host "сборка -> ScrcpyForStreamer-win64-$label.exe"
 
       - name: Собрать
         shell: cmd
@@ -106,7 +112,7 @@ jobs:
       - name: Проверить, что кириллица не поехала
         shell: pwsh
         run: |
-          $exe = "dist/ScrcpyForStreamer-win64-v${env:VER}.exe"
+          $exe = $env:OUT
           $bytes = [IO.File]::ReadAllBytes($exe)
           $text = [Text.Encoding]::Unicode.GetString($bytes)
           if ($text -notmatch 'Телефон') {
@@ -118,7 +124,7 @@ jobs:
       - name: Сохранить сборку как артефакт
         uses: actions/upload-artifact@v4
         with:
-          name: ScrcpyForStreamer-win64-v${{ env.VER }}
+          name: ScrcpyForStreamer-win64-${{ env.LABEL }}
           path: dist/*.exe
           if-no-files-found: error
 
@@ -128,7 +134,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $exe = "dist/ScrcpyForStreamer-win64-v${env:VER}.exe"
+          $exe = $env:OUT
           $existing = gh release view $env:TAG 2>$null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $env:TAG $exe --clobber
