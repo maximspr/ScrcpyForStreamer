@@ -87,19 +87,50 @@ jobs:
 
           if ($bad -gt 0) { exit 1 }
 
-      - name: Определить имя сборки
+      - name: Определить версию сборки
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # Версию задаёт либо тег, либо список опубликованных релизов:
+          # берём самый свежий и увеличиваем патч. Ручная сборка получает
+          # то самое имя, под которым выйдет, когда её решат выпустить.
           if ($env:GITHUB_REF -like 'refs/tags/*') {
-            # Релиз: имя из тега, 1.0.2 -> v1_0_2
-            $tag   = $env:GITHUB_REF -replace '^refs/tags/', ''
-            $label = 'v' + ($tag -replace '\.', '_')
+            $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
+            Write-Host "версия из тега: $tag"
           } else {
-            # Ручной прогон релизом не является. Имя нарочно не похоже на
-            # номер версии: иначе такую сборку легко принять за выпуск 0.0.0.
-            $tag   = ''
-            $label = 'dev-' + $env:GITHUB_SHA.Substring(0, 7)
+            # gh — нативная команда: при сбое она не бросает исключение,
+            # а выставляет $LASTEXITCODE, поэтому try/catch тут бесполезен.
+            $published = @()
+            $raw = gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases" --jq '.[] | select(.draft == false) | .tag_name' 2>$null
+            if ($LASTEXITCODE -eq 0 -and $raw) {
+              $published = @($raw)
+            } else {
+              Write-Host "::warning::не удалось прочитать список релизов"
+            }
+
+            # Сортировка строк тут не годится: 1.0.10 должна быть старше 1.0.9
+            $versions = @()
+            foreach ($t in $published) {
+              if ($t -match '^(\d+)\.(\d+)\.(\d+)$') {
+                $versions += [pscustomobject]@{
+                  Major = [int]$Matches[1]; Minor = [int]$Matches[2]; Patch = [int]$Matches[3]
+                }
+              }
+            }
+
+            if ($versions.Count -eq 0) {
+              $tag = '1.0.0'
+              Write-Host "подходящих релизов нет -> первая версия $tag"
+            } else {
+              $last = $versions | Sort-Object Major, Minor, Patch | Select-Object -Last 1
+              $prev = "$($last.Major).$($last.Minor).$($last.Patch)"
+              $tag  = "$($last.Major).$($last.Minor).$($last.Patch + 1)"
+              Write-Host "последний релиз $prev -> собираем следующую $tag"
+            }
           }
+
+          $label = 'v' + ($tag -replace '\.', '_')
           "TAG=$tag"                                    | Out-File $env:GITHUB_ENV -Append
           "LABEL=$label"                                | Out-File $env:GITHUB_ENV -Append
           "OUT=dist/ScrcpyForStreamer-win64-$label.exe" | Out-File $env:GITHUB_ENV -Append
