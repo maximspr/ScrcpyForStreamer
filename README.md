@@ -268,20 +268,25 @@ git tag -a 1.0.2 -m "ScrcpyForStreamer 1.0.2"
 git push origin 1.0.2
 ```
 
-CI does the rest. The tag uses dots and no `v` prefix; the file name uses underscores; the
-conversion is automatic.
+CI does the rest. The tag uses dots and no `v` prefix; the release file name uses underscores;
+the conversion is automatic.
+
+A manual run has no tag, so the version comes from your published releases: the newest one is
+found and its patch number incremented. With `1.0.1` released, a manual build produces
+`ScrcpyForStreamer-win64-v1_0_2.exe` — exactly the name it will carry once that version is
+tagged. If there are no releases yet it starts at `1.0.0`.
 
 ### CI/CD
 
 One workflow, [`.github/workflows/release.yml`](.github/workflows/release.yml), on
 `windows-latest`, triggered by a version tag or manually. A manual run builds and uploads the
-artifact without publishing a release.
+artifact without publishing a release, naming it after the next version.
 
 | Step | Fails when |
 |---|---|
 | Verify archive checksums against `deps/SHA256SUMS.txt` | a checksum does not match |
 | Verify dependency versions against the constants in the source | `Paths.Version` / `Paths.NetVersion`, the archive name and `build.bat` disagree |
-| Derive the version from the tag | — |
+| Determine the version — from the tag, or the next one after the latest release | — |
 | Build via `build.bat` | the compiler returns an error |
 | Verify Cyrillic survived in the built `.exe` | the encoding flag was lost |
 | Upload the artifact | no executable was produced |

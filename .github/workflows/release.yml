@@ -87,17 +87,54 @@ jobs:
 
           if ($bad -gt 0) { exit 1 }
 
-      - name: Определить версию из тега
+      - name: Определить версию сборки
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # Версию задаёт либо тег, либо список опубликованных релизов:
+          # берём самый свежий и увеличиваем патч. Ручная сборка получает
+          # то самое имя, под которым выйдет, когда её решат выпустить.
           if ($env:GITHUB_REF -like 'refs/tags/*') {
             $tag = $env:GITHUB_REF -replace '^refs/tags/', ''
+            Write-Host "версия из тега: $tag"
           } else {
-            $tag = '0.0.0'    # ручной прогон
+            # gh — нативная команда: при сбое она не бросает исключение,
+            # а выставляет $LASTEXITCODE, поэтому try/catch тут бесполезен.
+            $published = @()
+            $raw = gh api --paginate "repos/$env:GITHUB_REPOSITORY/releases" --jq '.[] | select(.draft == false) | .tag_name' 2>$null
+            if ($LASTEXITCODE -eq 0 -and $raw) {
+              $published = @($raw)
+            } else {
+              Write-Host "::warning::не удалось прочитать список релизов"
+            }
+
+            # Сортировка строк тут не годится: 1.0.10 должна быть старше 1.0.9
+            $versions = @()
+            foreach ($t in $published) {
+              if ($t -match '^(\d+)\.(\d+)\.(\d+)$') {
+                $versions += [pscustomobject]@{
+                  Major = [int]$Matches[1]; Minor = [int]$Matches[2]; Patch = [int]$Matches[3]
+                }
+              }
+            }
+
+            if ($versions.Count -eq 0) {
+              $tag = '1.0.0'
+              Write-Host "подходящих релизов нет -> первая версия $tag"
+            } else {
+              $last = $versions | Sort-Object Major, Minor, Patch | Select-Object -Last 1
+              $prev = "$($last.Major).$($last.Minor).$($last.Patch)"
+              $tag  = "$($last.Major).$($last.Minor).$($last.Patch + 1)"
+              Write-Host "последний релиз $prev -> собираем следующую $tag"
+            }
           }
-          "TAG=$tag"                        | Out-File $env:GITHUB_ENV -Append
-          "VER=$($tag -replace '\.', '_')"  | Out-File $env:GITHUB_ENV -Append
-          Write-Host "тег $tag -> ScrcpyForStreamer-win64-v$($tag -replace '\.', '_').exe"
+
+          $label = 'v' + ($tag -replace '\.', '_')
+          "TAG=$tag"                                    | Out-File $env:GITHUB_ENV -Append
+          "LABEL=$label"                                | Out-File $env:GITHUB_ENV -Append
+          "OUT=dist/ScrcpyForStreamer-win64-$label.exe" | Out-File $env:GITHUB_ENV -Append
+          Write-Host "сборка -> ScrcpyForStreamer-win64-$label.exe"
 
       - name: Собрать
         shell: cmd
@@ -106,7 +143,7 @@ jobs:
       - name: Проверить, что кириллица не поехала
         shell: pwsh
         run: |
-          $exe = "dist/ScrcpyForStreamer-win64-v${env:VER}.exe"
+          $exe = $env:OUT
           $bytes = [IO.File]::ReadAllBytes($exe)
           $text = [Text.Encoding]::Unicode.GetString($bytes)
           if ($text -notmatch 'Телефон') {
@@ -118,7 +155,7 @@ jobs:
       - name: Сохранить сборку как артефакт
         uses: actions/upload-artifact@v4
         with:
-          name: ScrcpyForStreamer-win64-v${{ env.VER }}
+          name: ScrcpyForStreamer-win64-${{ env.LABEL }}
           path: dist/*.exe
           if-no-files-found: error
 
@@ -128,7 +165,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $exe = "dist/ScrcpyForStreamer-win64-v${env:VER}.exe"
+          $exe = $env:OUT
           $existing = gh release view $env:TAG 2>$null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $env:TAG $exe --clobber
