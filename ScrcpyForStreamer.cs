@@ -1,5 +1,5 @@
 // ============================================================
-//  Экран телефона на компьютере  ->  scrcpy 4.1
+//  ScrcpyForStreamer — экран и звук телефона на компьютере  ->  scrcpy 4.1
 //  .NET Framework 4.x WinForms. Без прав администратора.
 // ============================================================
 
@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace PhoneScreen
+namespace ScrcpyForStreamer
 {
     // ========================================================
     // ЯЗЫК / LANGUAGE
@@ -61,7 +61,7 @@ namespace PhoneScreen
     {
         public static readonly string Root =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                         "PhoneScreen");
+                         "ScrcpyForStreamer");
 
         public static string ScrcpyDir { get { return Path.Combine(Root, "scrcpy"); } }
         public static string ScrcpyExe { get { return Path.Combine(ScrcpyDir, "scrcpy.exe"); } }
@@ -69,17 +69,18 @@ namespace PhoneScreen
         public static string Marker { get { return Path.Combine(ScrcpyDir, "installed-version.txt"); } }
         public static string Config { get { return Path.Combine(Root, "config.txt"); } }
         public static string LogFile { get { return Path.Combine(Root, "log.txt"); } }
-        public static string SelfCopy { get { return Path.Combine(Root, "PhoneScreen.exe"); } }
+        public static string SelfCopy { get { return Path.Combine(Root, "ScrcpyForStreamer.exe"); } }
 
         public const string Version = "4.1";
+        public const string NetVersion = "2.5.1";
 
         public static string AppName
         {
-            get { return Lang.T("Экран телефона", "Phone Screen"); }
+            get { return "ScrcpyForStreamer"; }
         }
         public static string SettingsName
         {
-            get { return Lang.T("Экран телефона — настройки", "Phone Screen — Settings"); }
+            get { return Lang.T("ScrcpyForStreamer — настройки", "ScrcpyForStreamer — Settings"); }
         }
 
         // Ссылки на используемые проекты / links to the projects we use
@@ -1457,6 +1458,7 @@ namespace PhoneScreen
         public static string Dir { get { return Path.Combine(Paths.Root, "gnirehtet"); } }
         public static string Exe { get { return Path.Combine(Dir, "gnirehtet.exe"); } }
         public static string Apk { get { return Path.Combine(Dir, "gnirehtet.apk"); } }
+        public static string Marker { get { return Path.Combine(Dir, "installed-version.txt"); } }
 
         const string Package = "com.genymobile.gnirehtet";
 
@@ -1466,9 +1468,24 @@ namespace PhoneScreen
         static volatile bool active;
         public static bool Active { get { return active; } }
 
+        // Проверять одно лишь наличие файлов нельзя: тогда обновлённый gnirehtet
+        // никогда не доедет до тех, кто уже включал раздачу — файлы на месте,
+        // распаковка пропускается, и так навсегда. Маркер версии, как у scrcpy.
+        static bool AlreadyExtracted()
+        {
+            try
+            {
+                return File.Exists(Exe)
+                    && File.Exists(Apk)
+                    && File.Exists(Marker)
+                    && File.ReadAllText(Marker).Trim() == Paths.NetVersion;
+            }
+            catch { return false; }
+        }
+
         public static void EnsureExtracted()
         {
-            if (File.Exists(Exe) && File.Exists(Apk)) return;
+            if (AlreadyExtracted()) return;
 
             Directory.CreateDirectory(Dir);
             Assembly asm = Assembly.GetExecutingAssembly();
@@ -1492,7 +1509,8 @@ namespace PhoneScreen
                     }
                 }
             }
-            Log.Write("gnirehtet extracted");
+            File.WriteAllText(Marker, Paths.NetVersion);
+            Log.Write("gnirehtet extracted " + Paths.NetVersion);
         }
 
         // gnirehtet зовёт "adb" по PATH, а наш adb лежит в своей папке
@@ -1548,8 +1566,28 @@ namespace PhoneScreen
             {
                 if (active) return null;
 
+                // Снимаем зависший раздатчик ДО распаковки: при смене версии
+                // gnirehtet.exe перезаписывается, а живой процесс держал бы файл.
+                // Заодно он держит порт 31416, если прошлый запуск умер аварийно.
+                if (relay == null)
+                {
+                    foreach (Process old in Process.GetProcessesByName("gnirehtet"))
+                    {
+                        try
+                        {
+                            if (IsOurs(old)) { old.Kill(); Log.Write("killed stray relay"); }
+                        }
+                        catch { }
+                        try { old.Dispose(); } catch { }
+                    }
+                }
+
                 try { EnsureExtracted(); }
-                catch (Exception ex) { return ex.Message; }
+                catch (Exception ex)
+                {
+                    Log.Write("gnirehtet extract failed: " + ex);
+                    return ex.Message;
+                }
 
                 string installed = Exec.Run(Paths.AdbExe,
                     "-s " + serial + " shell pm list packages " + Package, 15000);
@@ -1565,17 +1603,6 @@ namespace PhoneScreen
                             "Could not install the internet helper on the phone.\n\n" +
                             "The phone may block USB installs. On Xiaomi this is " +
                             "«Install via USB» in Developer options.");
-                }
-
-                // если прошлый запуск умер аварийно, раздатчик мог остаться
-                // висеть и держать порт 31416
-                if (relay == null)
-                {
-                    foreach (Process old in Process.GetProcessesByName("gnirehtet"))
-                    {
-                        try { old.Kill(); Log.Write("killed stray relay"); } catch { }
-                        try { old.Dispose(); } catch { }
-                    }
                 }
 
                 try
@@ -1632,6 +1659,20 @@ namespace PhoneScreen
                 active = false;
                 Log.Write("gnirehtet stopped");
             }
+        }
+
+        // Имя процесса "gnirehtet" может носить и чужая программа, которую
+        // пользователь запустил сам. Путь к чужому процессу часто недоступен —
+        // тогда считаем его чужим и не трогаем: лучше не поднять раздачу,
+        // чем убить постороннее.
+        static bool IsOurs(Process p)
+        {
+            try
+            {
+                return string.Equals(p.MainModule.FileName, Exe,
+                                     StringComparison.OrdinalIgnoreCase);
+            }
+            catch { return false; }
         }
 
         static void Kill()
@@ -3225,7 +3266,7 @@ namespace PhoneScreen
                     if (Directory.Exists(desktop))
                     {
                         Make(desktop, Paths.AppName, target, "",
-                             Lang.T("Экран телефона на компьютере", "Phone screen on the PC"));
+                             Lang.T("Экран и звук телефона на компьютере", "Phone screen and audio on the PC"));
                         Make(desktop, Paths.SettingsName, target, "--settings",
                              Lang.T("Настройки трансляции экрана", "Screen streaming settings"));
                     }
@@ -3271,6 +3312,109 @@ namespace PhoneScreen
     }
 
     // ========================================================
+    // ПЕРЕЕЗД СО СТАРОГО ИМЕНИ
+    //
+    // До переименования программа звалась PhoneScreen и жила в
+    // %LOCALAPPDATA%\PhoneScreen. Без переноса у тех, кто уже пользовался
+    // программой, слетел бы выбранный телефон вместе с подобранным
+    // кодировщиком, а старые ярлыки продолжили бы запускать старую копию,
+    // которая больше никогда не обновится.
+    // Срабатывает один раз: после переезда старой папки уже нет.
+    // ========================================================
+    static class Migration
+    {
+        const string OldName = "PhoneScreen";
+
+        static string OldRoot
+        {
+            get
+            {
+                return Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    OldName);
+            }
+        }
+
+        // Имена старых ярлыков нужны на обоих языках: какой из них лежит
+        // на столе, зависит от языка системы на момент их создания.
+        static readonly string[] OldShortcuts = {
+            "Экран телефона",
+            "Экран телефона — настройки",
+            "Phone Screen",
+            "Phone Screen — Settings"
+        };
+
+        public static void RunOnce()
+        {
+            try
+            {
+                string old = OldRoot;
+                if (!Directory.Exists(old)) return;
+                if (string.Equals(old, Paths.Root, StringComparison.OrdinalIgnoreCase)) return;
+
+                MoveConfig(old);
+                DropOldShortcuts();
+
+                // scrcpy и gnirehtet распакуются заново в новую папку,
+                // поэтому старую держать незачем
+                try
+                {
+                    Directory.Delete(old, true);
+                    Log.Write("migration: removed " + old);
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("migration: could not remove " + old + ": " + ex.Message);
+                }
+            }
+            catch (Exception ex) { Log.Write("migration failed: " + ex.Message); }
+        }
+
+        // Свой конфиг важнее: если он уже есть, старый не трогаем
+        static void MoveConfig(string old)
+        {
+            try
+            {
+                string oldConfig = Path.Combine(old, "config.txt");
+                if (!File.Exists(oldConfig)) return;
+                if (File.Exists(Paths.Config)) return;
+
+                Directory.CreateDirectory(Paths.Root);
+                File.Copy(oldConfig, Paths.Config, false);
+                Log.Write("migration: config moved from " + old);
+            }
+            catch (Exception ex) { Log.Write("migration: config move failed: " + ex.Message); }
+        }
+
+        static void DropOldShortcuts()
+        {
+            try
+            {
+                string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                if (!Directory.Exists(desktop)) return;
+
+                foreach (string name in OldShortcuts)
+                {
+                    string link = Path.Combine(desktop, name + ".lnk");
+                    try
+                    {
+                        if (File.Exists(link))
+                        {
+                            File.Delete(link);
+                            Log.Write("migration: removed shortcut " + link);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("migration: could not remove " + link + ": " + ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex) { Log.Write("migration: shortcuts failed: " + ex.Message); }
+        }
+    }
+
+    // ========================================================
     // ТОЧКА ВХОДА
     // ========================================================
     static class Program
@@ -3291,7 +3435,7 @@ namespace PhoneScreen
         static bool ClaimSingleInstance(string key, string windowTitle)
         {
             bool created;
-            try { instanceLock = new Mutex(true, "Local\\PhoneScreen_" + key, out created); }
+            try { instanceLock = new Mutex(true, "Local\\ScrcpyForStreamer_" + key, out created); }
             catch { return true; }
 
             if (created) return true;
@@ -3331,6 +3475,9 @@ namespace PhoneScreen
 
             try
             {
+                // строго до Config.Load, иначе настройки со старого имени не подхватятся
+                Migration.RunOnce();
+
                 Engine engine = new Engine();
 
                 // применяем сохранённый выбор языка до открытия любого окна

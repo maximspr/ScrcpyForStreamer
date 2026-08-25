@@ -3,7 +3,7 @@ rem Сборка ScrcpyForStreamer на Windows.
 rem Архивы лежат в deps\ под официальными именами; имя ресурса внутри exe
 rem задаётся вторым параметром /resource и остаётся scrcpy.zip / gnirehtet.zip.
 rem VER можно переопределить переменной окружения (это делает CI из тега).
-rem /codepage:65001 обязателен: PhoneScreen.cs в UTF-8 без BOM, без флага
+rem /codepage:65001 обязателен: ScrcpyForStreamer.cs в UTF-8 без BOM, без флага
 rem русские строки на машине с другой ANSI-кодировкой превратятся в мусор.
 
 if "%VER%"=="" set VER=1_0_0
@@ -24,7 +24,7 @@ if not exist dist mkdir dist
 "%CSC%" /nologo /target:winexe /optimize+ /codepage:65001 /win32icon:app.ico /out:"%OUT%" ^
   /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll ^
   /r:System.Management.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
-  /resource:"%SCRCPY%",scrcpy.zip /resource:"%GNIREHTET%",gnirehtet.zip PhoneScreen.cs
+  /resource:"%SCRCPY%",scrcpy.zip /resource:"%GNIREHTET%",gnirehtet.zip ScrcpyForStreamer.cs
 
 if errorlevel 1 (echo. & echo СБОРКА НЕ УДАЛАСЬ & call :hold & exit /b 1)
 echo. & echo Готово: %OUT%

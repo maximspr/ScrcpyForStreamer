@@ -33,6 +33,60 @@ jobs:
           }
           if ($bad -gt 0) { exit 1 }
 
+      - name: Сверить версии зависимостей с константами в коде
+        shell: pwsh
+        run: |
+          # Версия каждой зависимости живёт в трёх местах: константа в коде
+          # (по ней пишется и сверяется маркер installed-version.txt), имя
+          # архива в deps/ и ссылка на него в build.bat. Разъедутся молча:
+          # сборка пройдёт, а обновление не доедет до тех, кто уже пользовался
+          # программой, потому что маркер на их машине совпадёт со старым.
+          $src = Get-Content ScrcpyForStreamer.cs -Raw
+          $bad = 0
+
+          $checks = @(
+            @{ Name = 'scrcpy';    Const = 'Version';    Mask = 'scrcpy-win64-v*.zip';         Rx = '^scrcpy-win64-v(.+)\.zip$' },
+            @{ Name = 'gnirehtet'; Const = 'NetVersion'; Mask = 'gnirehtet-rust-win64-v*.zip'; Rx = '^gnirehtet-rust-win64-v(.+)\.zip$' }
+          )
+
+          foreach ($c in $checks) {
+            $before = $bad
+            $m = [regex]::Match($src, ('public\s+const\s+string\s+{0}\s*=\s*"([^"]+)"' -f $c.Const))
+            if (-not $m.Success) {
+              Write-Host "::error::В ScrcpyForStreamer.cs не найдена константа Paths.$($c.Const)"
+              $bad++; continue
+            }
+            $inCode = $m.Groups[1].Value
+
+            $files = @(Get-ChildItem -Path deps -Filter $c.Mask)
+            if ($files.Count -ne 1) {
+              Write-Host "::error::В deps/ ожидался ровно один архив по маске $($c.Mask), найдено $($files.Count)"
+              $bad++; continue
+            }
+            $file = $files[0]
+
+            $n = [regex]::Match($file.Name, $c.Rx)
+            if (-not $n.Success) {
+              Write-Host "::error::Не разобрать версию из имени $($file.Name)"
+              $bad++; continue
+            }
+            $inDeps = $n.Groups[1].Value
+
+            if ($inCode -ne $inDeps) {
+              Write-Host "::error::$($c.Name): в коде Paths.$($c.Const) = '$inCode', а в deps/ лежит '$inDeps'. Маркер версии не совпадёт — обновление молча не доедет до пользователей."
+              $bad++
+            }
+
+            if (-not (Select-String -Path build.bat -SimpleMatch -Pattern $file.Name -Quiet)) {
+              Write-Host "::error::$($c.Name): build.bat не ссылается на $($file.Name)"
+              $bad++
+            }
+
+            if ($bad -eq $before) { Write-Host "OK  $($c.Name) $inCode" }
+          }
+
+          if ($bad -gt 0) { exit 1 }
+
       - name: Определить версию из тега
         shell: pwsh
         run: |
