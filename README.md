@@ -1,6 +1,6 @@
 # ScrcpyForStreamer
 
-**Your phone's screen and sound on the PC, in one click — for streamers who don't want to fight with settings.**
+**ScrcpyForStreamer — mirrors an Android phone's screen and audio on a Windows PC over USB.**
 
 [![Release](https://img.shields.io/github/v/release/maximspr/ScrcpyForStreamer?label=release)](https://github.com/maximspr/ScrcpyForStreamer/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -8,34 +8,17 @@
 
 🇷🇺 **[Читать по-русски](README.ru.md)**
 
-One file. Double-click it and it sets itself up — no installer, no administrator rights,
-nothing to download, nothing to configure. [scrcpy](https://github.com/Genymobile/scrcpy) and
-`adb` are already inside the executable and unpack themselves on first launch.
+A GUI wrapper around [scrcpy](https://github.com/Genymobile/scrcpy). The program is a single
+executable: scrcpy and `adb` are embedded in it and unpack themselves into the user profile on
+first launch, so there is no installer and no need for administrator rights.
 
-After that first setup it really is one click: the program remembers your phone and starts the
-stream by itself the next time you open it.
+The wizard detects what is missing — cable, USB debugging, permission on the phone — and shows
+what to do, with menu paths matched to the phone's brand. USB debugging has to be enabled on the
+phone once; Android provides no way around that. A phone that has been set up is remembered, and
+the next launch starts the stream without further input.
 
-The picture and sound land on the PC as an ordinary window and an ordinary audio stream, so OBS,
-Streamlabs or any recorder takes them as a plain window source — no plugin, no virtual camera,
-nothing to wire together.
-
-### Why streamers
-
-| | |
-|---|---|
-| 🔊 | **Sound comes across too**, not just the picture — routed to the PC automatically according to the phone's Android version |
-| ⚙️ | **The encoder is picked for you** by chipset, so the phone doesn't cook itself and the picture doesn't start stuttering halfway through a stream. Phones that offer only software encoders are refused outright |
-| 🖼️ | **Borderless, fullscreen or always-on-top** — whichever window is easiest to capture |
-| 🎚️ | **Up to 120 fps and 30 Mbps** when you want it; 60 fps and 20 Mbps out of the box |
-| 🔁 | **Closes itself when the cable is pulled**, so nothing is left hanging after the stream |
-
-If you do want to tune something, everything is in one settings window — but the defaults are
-already the ones you would have chosen.
-
-> [!IMPORTANT]
-> One thing genuinely has to be done on the phone, once: turning on **USB debugging**. Android
-> offers no way around this. The program detects whether it is on and shows the exact menu path
-> for your phone's brand, so it takes a minute and never comes up again.
+The picture and sound arrive on the PC as an ordinary window and an ordinary audio stream, which
+recording and streaming software can capture like any other window.
 
 > [!NOTE]
 > Earlier versions were called **Phone Screen** and kept their data in
