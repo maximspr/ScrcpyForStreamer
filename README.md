@@ -1,6 +1,6 @@
 # ScrcpyForStreamer
 
-**ScrcpyForStreamer — mirrors an Android phone's screen and audio on a Windows PC over USB.**
+**ScrcpyForStreamer — a scrcpy installer for streamers: it sets scrcpy up itself and brings an Android phone's screen and audio to a Windows PC over USB.**
 
 [![Release](https://img.shields.io/github/v/release/maximspr/ScrcpyForStreamer?label=release)](https://github.com/maximspr/ScrcpyForStreamer/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -8,17 +8,19 @@
 
 🇷🇺 **[Читать по-русски](README.ru.md)**
 
-A GUI wrapper around [scrcpy](https://github.com/Genymobile/scrcpy). The program is a single
-executable: scrcpy and `adb` are embedded in it and unpack themselves into the user profile on
-first launch, so there is no installer and no need for administrator rights.
+In essence the program is an installer for [scrcpy](https://github.com/Genymobile/scrcpy).
+scrcpy and `adb` are embedded in the single executable; on first launch it unpacks them into the
+user profile, puts a copy of itself there and creates two desktop shortcuts. Nothing is downloaded
+and administrator rights are not needed.
 
-The wizard detects what is missing — cable, USB debugging, permission on the phone — and shows
-what to do, with menu paths matched to the phone's brand. USB debugging has to be enabled on the
-phone once; Android provides no way around that. A phone that has been set up is remembered, and
-the next launch starts the stream without further input.
+After that it works as a graphical shell over scrcpy. The wizard detects what is missing — cable,
+USB debugging, permission on the phone — and shows what to do, with menu paths matched to the
+phone's brand. USB debugging has to be enabled on the phone once; Android provides no way around
+that. A phone that has been set up is remembered, and the next launch starts the stream without
+further input.
 
 The picture and sound arrive on the PC as an ordinary window and an ordinary audio stream, which
-recording and streaming software can capture like any other window.
+OBS and other recording software capture like any other window — that is what the program is for.
 
 > [!NOTE]
 > Earlier versions were called **Phone Screen** and kept their data in
